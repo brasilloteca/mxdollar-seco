@@ -1,440 +1,348 @@
-  <!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MX$ - Calculadora de Distribuição</title>
-  <style>
-    :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --muted:#9aa7bf;
-      --accent:#10b981;
-      --danger:#ef4444;
-      --panel:#0b1220;
-      --glass: rgba(255,255,255,0.03);
-    }
-    *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    body{margin:0;background:linear-gradient(180deg,#071029 0%, #092032 60%);color:#e6eef8;padding:28px;}
-    .wrap{max-width:980px;margin:0 auto}
-    header {text-align:center;margin-bottom:18px}
-    h1{font-size:44px;margin:0;color:#fff;letter-spacing:1px}
-    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-    .full{grid-column:1/-1}
-    .card{background:var(--panel);padding:12px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
-    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-    input[type="text"], input[type="number"], select{
-      width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:#e6eef8;
-      font-size:15px;
-    }
-    .row{display:flex;gap:8px}
-    .btn{padding:10px 14px;border-radius:10px;border:0;background:#0ea5a4;color:#042027;font-weight:600;cursor:pointer}
-    .btn.secondary{background:#1f2937;color:#fff}
-    .btn.red{background:var(--danger);color:#fff}
-    .outputs{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
-    .output{flex:1;min-width:180px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:10px;border-radius:10px}
-    .big{font-size:20px;font-weight:700;color:#fff}
-    .muted{color:var(--muted);font-size:13px}
-    .history{margin-top:12px}
-    table{width:100%;border-collapse:collapse;font-size:14px}
-    th, td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left;color:#dbeafe}
-    th{font-size:13px;color:var(--muted)}
-    .green{background:linear-gradient(90deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02));color:#b7f1d8}
-    .red{background:linear-gradient(90deg, rgba(239,68,68,0.08), rgba(239,68,68,0.02));color:#ffd6d6}
-    .small{font-size:13px;color:var(--muted)}
-    .controls{display:flex;gap:8px;flex-wrap:wrap}
-    .flex-between{display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .note{font-size:13px;color:var(--muted);margin-top:6px}
-    .muted-2{color:#9fb3cc;font-size:13px}
-    .inline{display:inline-block}
-    @media(max-width:820px){
-      .grid{grid-template-columns:1fr}
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MX$ — Calculadora</title>
+<style>
+  :root{font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif}
+  body{background:#f6f7fb;color:#111;margin:0;padding:24px;display:flex;justify-content:center}
+  .container{width:980px;max-width:96%;background:#fff;border-radius:12px;box-shadow:0 6px 30px rgba(20,25,40,0.08);padding:22px}
+  h1{font-size:40px;margin:0 0 14px;color:#0b3b66}
+  .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  label{font-size:13px;color:#334;display:block;margin-bottom:6px}
+  input[type="text"],input[type="number"]{padding:10px 12px;border:1px solid #d7dde8;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box}
+  .col{flex:1;min-width:140px}
+  .small{width:140px}
+  .btn{background:#0b66a3;color:#fff;padding:10px 14px;border-radius:8px;border:0;cursor:pointer;font-weight:600}
+  .btn.secondary{background:#e6eef7;color:#0b3b66}
+  .btn.danger{background:#e24b4b}
+  .output{background:#f3f6fb;padding:12px;border-radius:8px;border:1px solid #e8edf6}
+  .summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+  .card{flex:1;min-width:220px;padding:12px;border-radius:8px;background:#fff;border:1px solid #eef3fa}
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  th,td{padding:8px;border-bottom:1px solid #f0f3f8;text-align:left;font-size:13px}
+  th{background:#fbfdff;font-weight:700}
+  .profit{background:#eaffef}
+  .loss{background:#fff0f0}
+  .center{text-align:center}
+  .muted{color:#6b7a8a;font-size:13px}
+  .small-note{font-size:12px;color:#6b7a8a;margin-top:6px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .flex-right{display:flex;justify-content:flex-end;gap:8px}
+  @media(max-width:720px){.row{flex-direction:column}.flex-right{justify-content:flex-start}}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>MX$</h1>
-      <div class="note">Calculadora de distribuição proporcional — retorno igual</div>
-    </header>
+<div class="container" role="main">
+  <h1>MX$</h1>
 
-    <div class="grid">
-      <!-- Left column: saldo e multiplicadores -->
-      <div class="card">
-        <label>Saldo inicial (R$)</label>
-        <input id="saldoInicial" type="number" step="0.01" min="0" />
-
-        <div style="height:8px"></div>
-
-        <label>Saldo atual (calculado)</label>
-        <input id="saldoAtual" type="text" readonly />
-
-        <div style="height:10px"></div>
-        <label>Multiplicadores (mantidos ao resetar campos)</label>
-        <div class="row">
-          <input id="multGanho" type="number" step="0.01" value="1" title="Multiplicador aplicável a ganhos" />
-          <input id="mult1Perda" type="number" step="0.01" value="1" title="Multiplicador aplicável a 1 aposta perdida" />
-          <input id="mult2Perda" type="number" step="0.01" value="1" title="Multiplicador aplicável a 2 apostas perdidas" />
-        </div>
-        <div class="small" style="margin-top:8px">Use os multiplicadores para ajustar (por exemplo: estratégias de gestão).</div>
-      </div>
-
-      <!-- Right column: times e odds -->
-      <div class="card">
-        <label>Time 1 (opcional)</label>
-        <input id="team1" type="text" placeholder="Time 1" />
-
-        <div style="height:8px"></div>
-
-        <label>Time 2 (opcional)</label>
-        <input id="team2" type="text" placeholder="Time 2" />
-
-        <div style="height:8px"></div>
-
-        <label>Odd Time 1</label>
-        <input id="odd1" type="number" step="0.01" min="1" placeholder="Ex: 1.75" />
-
-        <div style="height:8px"></div>
-
-        <label>Odd Time 2</label>
-        <input id="odd2" type="number" step="0.01" min="1" placeholder="Ex: 2.10" />
-      </div>
-
-      <!-- Full width: apostas e ações -->
-      <div class="card full">
-        <div class="grid" style="grid-template-columns:1fr 220px;align-items:end;gap:12px">
-          <div>
-            <label>Valor total a apostar (T)</label>
-            <input id="totalApostado" type="number" step="0.01" min="0" placeholder="Ex: 100" />
-          </div>
-          <div>
-            <label>Quantas apostas perderam?</label>
-            <select id="apostasPerdidas">
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="height:12px"></div>
-        <div class="controls">
-          <button id="btnCalcular" class="btn">Calcular distribuição</button>
-          <button id="btnApostaConcluida" class="btn secondary">Aposta concluída</button>
-          <button id="btnResetCampos" class="btn secondary">Resetar campos (não multipliers)</button>
-          <button id="btnApagarUltima" class="btn" style="background:#374151;color:#fff">Apagar última aposta</button>
-          <button id="btnResetHist" class="btn red">Resetar histórico</button>
-        </div>
-
-        <div class="outputs" id="outputs">
-          <div class="output">
-            <div class="muted">Valor a apostar — Aposta 1</div>
-            <div id="stake1" class="big">-</div>
-            <div class="muted-2" id="stake1Detail"></div>
-          </div>
-          <div class="output">
-            <div class="muted">Valor a apostar — Aposta 2</div>
-            <div id="stake2" class="big">-</div>
-            <div class="muted-2" id="stake2Detail"></div>
-          </div>
-          <div class="output" style="min-width:260px">
-            <div class="muted">Resultado se <strong>apenas 1</strong> aposta vencer</div>
-            <div id="oneWin" class="big">-</div>
-            <div class="muted-2" id="oneWinPct"></div>
-          </div>
-          <div class="output" style="min-width:260px">
-            <div class="muted">Resultado se <strong>ambas</strong> apostas vencerem</div>
-            <div id="bothWin" class="big">-</div>
-            <div class="muted-2" id="bothWinPct"></div>
-          </div>
-        </div>
-
-        <div class="note" style="margin-top:10px">
-          Observações: o campo "Quantas apostas perderam?" define o resultado da aposta ao clicar em <strong>Aposta concluída</strong>:
-          <ul style="margin:6px 0 0 18px;color:var(--muted);">
-            <li>0 → considera que ambas ganharam;</li>
-            <li>1 → considera que apenas 1 ganhou (o retorno igual R aplica-se aqui);</li>
-            <li>2 → ambas perderam (prejuízo = -T).</li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Histórico -->
-      <div class="card full">
-        <div class="flex-between">
-          <div>
-            <h3 style="margin:0;color:#fff">Histórico de apostas</h3>
-            <div class="small">As apostas são salvas em <code>localStorage</code> e o saldo é atualizado automaticamente.</div>
-          </div>
-          <div class="small muted">Total entradas: <span id="histCount">0</span></div>
-        </div>
-
-        <div class="history">
-          <table id="historyTable">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Data</th>
-                <th>Valor apostado (R$)</th>
-                <th>Resultado (R$)</th>
-                <th>% sobre T</th>
-                <th>Obs</th>
-              </tr>
-            </thead>
-            <tbody id="historyBody">
-              <!-- preenchido por JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
+  <!-- SALDO -->
+  <div class="row" style="align-items:end">
+    <div class="col small">
+      <label for="saldoInicial">Saldo inicial (R$)</label>
+      <input id="saldoInicial" type="number" step="0.01" min="0" />
+    </div>
+    <div class="col small">
+      <label for="saldoAtual">Saldo atual (R$)</label>
+      <input id="saldoAtual" type="text" readonly />
+      <div class="small-note">Saldo = saldo inicial + histórico de lucro/prejuízo</div>
+    </div>
+    <div class="col" style="flex:2">
+      <label>Histórico acumulado (R$)</label>
+      <input id="histAcumulado" type="text" readonly />
     </div>
   </div>
 
+  <!-- TIMES -->
+  <div class="row">
+    <div class="col">
+      <label for="timeA">Time A</label>
+      <input id="timeA" type="text" placeholder="Nome do time A (opcional)"/>
+    </div>
+    <div class="col">
+      <label for="timeB">Time B</label>
+      <input id="timeB" type="text" placeholder="Nome do time B (opcional)"/>
+    </div>
+  </div>
+
+  <!-- ODDS -->
+  <div class="row">
+    <div class="col small">
+      <label for="oddA">Odd 1</label>
+      <input id="oddA" type="number" step="0.01" min="1" placeholder="ex: 1.57"/>
+    </div>
+    <div class="col small">
+      <label for="oddB">Odd 2</label>
+      <input id="oddB" type="number" step="0.01" min="1" placeholder="ex: 1.62"/>
+    </div>
+    <div class="col small">
+      <label for="valorTotal">Valor total a apostar (R$)</label>
+      <input id="valorTotal" type="number" step="0.01" min="0" />
+    </div>
+    <div class="col small">
+      <label for="qtdPerdidas">Quantas apostas perderam?</label>
+      <input id="qtdPerdidas" type="number" step="1" min="0" max="2" value="0" />
+      <div class="small-note">Use 0, 1 ou 2 antes de "Aposta concluída"</div>
+    </div>
+  </div>
+
+  <!-- BOTOES DE AÇÃO -->
+  <div class="row">
+    <div class="controls">
+      <button id="btnCalcular" class="btn">Calcular distribuição</button>
+      <button id="btnConcluir" class="btn secondary">Aposta concluída</button>
+      <button id="btnResetHist" class="btn danger">Resetar histórico</button>
+      <button id="btnApagarUlt" class="btn secondary">Apagar última aposta</button>
+    </div>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div class="row">
+    <div class="output" style="width:100%">
+      <div class="summary" id="resultArea">
+        <div class="card">
+          <strong>Distribuição</strong>
+          <div id="distInfo" class="muted">Nenhum cálculo executado ainda.</div>
+        </div>
+        <div class="card">
+          <strong>Se apenas 1 acerta</strong>
+          <div id="oneWin" class="muted">—</div>
+        </div>
+        <div class="card">
+          <strong>Se ambas acertam</strong>
+          <div id="bothWin" class="muted">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div class="row">
+    <div style="width:100%">
+      <h3 style="margin:10px 0 6px">Histórico de apostas</h3>
+      <div class="small-note">Cada linha: nº | data | valor apostado | resultado (R$) | % em relação ao total | (verde = ganho, vermelho = prejuízo)</div>
+      <table id="histTable" aria-live="polite">
+        <thead>
+          <tr><th>#</th><th>Data</th><th>Valor</th><th>Ganho/Prejuízo (R$)</th><th>% do total</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
 <script>
-/*
-  MX$ - Calculadora de distribuição proporcional (retorno igual)
-  - armazenamento: localStorage keys: mx_saldoInicial, mx_history, mx_multipliers
-  - histórico: array de {date, total, result, pct, note}
-*/
+/* MX$ — script */
+(function(){
+  // Elements
+  const saldoInicialEl = document.getElementById('saldoInicial');
+  const saldoAtualEl = document.getElementById('saldoAtual');
+  const histAcumuladoEl = document.getElementById('histAcumulado');
+  const oddAEl = document.getElementById('oddA');
+  const oddBEl = document.getElementById('oddB');
+  const valorTotalEl = document.getElementById('valorTotal');
+  const btnCalcular = document.getElementById('btnCalcular');
+  const btnConcluir = document.getElementById('btnConcluir');
+  const btnResetHist = document.getElementById('btnResetHist');
+  const btnApagarUlt = document.getElementById('btnApagarUlt');
+  const distInfo = document.getElementById('distInfo');
+  const oneWin = document.getElementById('oneWin');
+  const bothWin = document.getElementById('bothWin');
+  const histTbody = document.querySelector('#histTable tbody');
+  const qtdPerdidasEl = document.getElementById('qtdPerdidas');
 
-const $ = id => document.getElementById(id);
+  // LocalStorage keys
+  const KEY_SALDO = 'mx_saldoInicial';
+  const KEY_HISTORY = 'mx_history';
 
-const stateKeys = {
-  saldoInicial: 'mx_saldoInicial_v1',
-  history: 'mx_history_v1',
-  multipliers: 'mx_mults_v1'
-};
+  // State
+  let history = []; // array of {date, valor, resultado, percent}
+  let saldoInicial = 0;
 
-function formatMoney(v){
-  return Number(v || 0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
-}
+  // Utility
+  function fmtMoney(v){ return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function nowDate(){ const d=new Date(); return d.toLocaleString('pt-BR'); }
 
-function loadState(){
-  const si = parseFloat(localStorage.getItem(stateKeys.saldoInicial) || '0');
-  $('saldoInicial').value = isNaN(si) ? '' : si;
+  // Load from localStorage
+  function load(){
+    const s = localStorage.getItem(KEY_SALDO);
+    saldoInicial = s ? parseFloat(s) : 0;
+    const h = localStorage.getItem(KEY_HISTORY);
+    history = h ? JSON.parse(h) : [];
+    renderAll();
+  }
 
-  // multipliers
-  const mults = JSON.parse(localStorage.getItem(stateKeys.multipliers) || '{"gain":1,"loss1":1,"loss2":1}');
-  $('multGanho').value = mults.gain ?? 1;
-  $('mult1Perda').value = mults.loss1 ?? 1;
-  $('mult2Perda').value = mults.loss2 ?? 1;
+  function save(){
+    localStorage.setItem(KEY_SALDO, String(saldoInicial));
+    localStorage.setItem(KEY_HISTORY, JSON.stringify(history));
+  }
 
-  renderHistory();
-  updateSaldoAtual();
-}
+  // Render history table and saldo
+  function renderAll(){
+    // Fill inputs
+    saldoInicialEl.value = saldoInicial ? saldoInicial : '';
+    // Compute accumulated profit
+    const acum = history.reduce((s,it)=> s + Number(it.resultado),0);
+    histAcumuladoEl.value = 'R$ ' + fmtMoney(acum);
+    saldoAtualEl.value = 'R$ ' + fmtMoney((saldoInicial||0) + acum);
 
-function saveMultipliers(){
-  const mults = {
-    gain: parseFloat($('multGanho').value) || 1,
-    loss1: parseFloat($('mult1Perda').value) || 1,
-    loss2: parseFloat($('mult2Perda').value) || 1
-  };
-  localStorage.setItem(stateKeys.multipliers, JSON.stringify(mults));
-}
+    // Render history rows
+    histTbody.innerHTML = '';
+    history.forEach((it, idx) => {
+      const tr = document.createElement('tr');
+      tr.className = Number(it.resultado) >= 0 ? 'profit' : 'loss';
+      const num = document.createElement('td'); num.textContent = idx+1;
+      const dt = document.createElement('td'); dt.textContent = it.date;
+      const val = document.createElement('td'); val.textContent = 'R$ ' + fmtMoney(it.valor);
+      const res = document.createElement('td'); res.textContent = (Number(it.resultado) >=0 ? '+' : '') + 'R$ ' + fmtMoney(it.resultado);
+      const pc = document.createElement('td'); pc.textContent = (Number(it.percent) >=0 ? '+' : '') + Number(it.percent).toFixed(2) + '%';
+      tr.appendChild(num); tr.appendChild(dt); tr.appendChild(val); tr.appendChild(res); tr.appendChild(pc);
+      histTbody.appendChild(tr);
+    });
+  }
 
-function updateSaldoAtual(){
-  const si = parseFloat($('saldoInicial').value) || 0;
-  const history = JSON.parse(localStorage.getItem(stateKeys.history) || '[]');
-  const sum = history.reduce((s,h) => s + (parseFloat(h.result) || 0), 0);
-  const atual = si + sum;
-  $('saldoAtual').value = "R$ " + formatMoney(atual);
-}
-
-function renderHistory(){
-  const history = JSON.parse(localStorage.getItem(stateKeys.history) || '[]');
-  const tbody = $('historyBody');
-  tbody.innerHTML = '';
-  history.forEach((h, idx) => {
-    const tr = document.createElement('tr');
-    const cls = (parseFloat(h.result) || 0) >= 0 ? 'green' : 'red';
-    tr.className = cls;
-    tr.innerHTML = `
-      <td>${idx+1}</td>
-      <td>${h.date}</td>
-      <td>R$ ${formatMoney(h.total)}</td>
-      <td>R$ ${formatMoney(h.result)}</td>
-      <td>${Number(h.pct).toFixed(2)}%</td>
-      <td class="small">${h.note || ''}</td>
-    `;
-    tbody.appendChild(tr);
+  // When user changes saldo inicial: save
+  saldoInicialEl.addEventListener('change', () => {
+    const v = parseFloat(saldoInicialEl.value);
+    saldoInicial = isFinite(v) ? v : 0;
+    save();
+    renderAll();
   });
-  $('histCount').innerText = history.length;
-  updateSaldoAtual();
-}
 
-function calcDistribution(){
-  const odd1 = parseFloat($('odd1').value);
-  const odd2 = parseFloat($('odd2').value);
-  const T = parseFloat($('totalApostado').value);
-
-  if(!T || T <= 0 || !odd1 || !odd2 || odd1 <= 0 || odd2 <= 0){
-    alert('Informe corretamente: duas odds válidas (>0) e o valor total a apostar (>0).');
-    return null;
+  // Calculation function (two odds)
+  function calcularDistribuicao(){
+    const o1 = parseFloat(oddAEl.value);
+    const o2 = parseFloat(oddBEl.value);
+    const T = parseFloat(valorTotalEl.value);
+    if(!(o1>0 && o2>0 && T>0)){
+      alert('Preencha corretamente as odds e o valor total (maior que zero).');
+      return null;
+    }
+    // inversos
+    const inv1 = 1 / o1;
+    const inv2 = 1 / o2;
+    const somaInv = inv1 + inv2;
+    // stakes
+    const A1 = (T / o1) / somaInv;
+    const A2 = (T / o2) / somaInv;
+    // guaranteed equal return R (se apenas 1 acerta)
+    const R = T / somaInv; // este é o retorno (inclui stake)
+    // returns
+    const retOne = R; // retorno se apenas 1 acerta
+    const profitOne = retOne - T;
+    // se as duas acertarem:
+    const retBoth = (A1 * o1) + (A2 * o2); // normalmente = R + R = 2R
+    const profitBoth = retBoth - T;
+    // percentages
+    const pctOne = (profitOne / T) * 100;
+    const pctBoth = (profitBoth / T) * 100;
+    // Round sensible
+    function r(v){ return Math.round(v*100)/100;}
+    const result = {
+      A1: r(A1),
+      A2: r(A2),
+      R: r(R),
+      retOne: r(retOne),
+      profitOne: r(profitOne),
+      pctOne: r(pctOne),
+      retBoth: r(retBoth),
+      profitBoth: r(profitBoth),
+      pctBoth: r(pctBoth),
+      T: r(T),
+      o1, o2
+    };
+    return result;
   }
 
-  // fórmula de distribuição proporcional para retorno igual (n=2)
-  const inv1 = 1/odd1;
-  const inv2 = 1/odd2;
-  const S = inv1 + inv2;
+  // Show calculation results in UI
+  btnCalcular.addEventListener('click', ()=>{
+    const res = calcularDistribuicao();
+    if(!res) return;
+    distInfo.innerHTML = `
+      <div><strong>Stake 1:</strong> R$ ${fmtMoney(res.A1)} (Odd ${res.o1})</div>
+      <div><strong>Stake 2:</strong> R$ ${fmtMoney(res.A2)} (Odd ${res.o2})</div>
+      <div class="small-note">Retorno igual esperado ao acertar apenas 1 aposta: R$ ${fmtMoney(res.R)}</div>
+    `;
+    oneWin.innerHTML = `
+      <div><strong>Retorno:</strong> R$ ${fmtMoney(res.retOne)}</div>
+      <div><strong>Lucro/Prejuízo:</strong> ${res.profitOne >=0 ? '+' : ''}R$ ${fmtMoney(res.profitOne)}</div>
+      <div class="muted"><strong>% sobre o total:</strong> ${res.pctOne.toFixed(2)}%</div>
+    `;
+    bothWin.innerHTML = `
+      <div><strong>Retorno total (ambas vencem):</strong> R$ ${fmtMoney(res.retBoth)}</div>
+      <div><strong>Lucro/Prejuízo:</strong> ${res.profitBoth >=0 ? '+' : ''}R$ ${fmtMoney(res.profitBoth)}</div>
+      <div class="muted"><strong>% sobre o total:</strong> ${res.pctBoth.toFixed(2)}%</div>
+    `;
+  });
 
-  const A1 = (T / odd1) / S;
-  const A2 = (T / odd2) / S;
+  // Concluir aposta: usa qtdPerdidas para definir resultado e adiciona ao histórico
+  btnConcluir.addEventListener('click', ()=>{
+    const res = calcularDistribuicao();
+    if(!res) return;
+    const lost = parseInt(qtdPerdidasEl.value,10);
+    if(isNaN(lost) || lost < 0 || lost > 2){
+      alert('Defina quantas apostas perderam: 0, 1 ou 2.');
+      return;
+    }
+    let resultado = 0;
+    // wins = 2 - lost
+    const wins = 2 - lost;
+    if(wins === 2){
+      resultado = res.profitBoth; // lucro se ambas acertarem
+    } else if(wins === 1){
+      resultado = res.profitOne; // lucro se apenas uma
+    } else {
+      resultado = -res.T; // perderam tudo
+    }
 
-  // retornos brutos por aposta
-  const ret1 = A1 * odd1;
-  const ret2 = A2 * odd2;
-  // ret1 e ret2 devem ser iguais (R)
-  const R = (T / S);
+    // push history entry
+    const entry = {
+      date: nowDate(),
+      valor: Number(res.T),
+      resultado: Number(Number(resultado).toFixed(2)),
+      percent: Number(((resultado / res.T) * 100).toFixed(2))
+    };
+    history.push(entry);
 
-  // se apenas 1 vencer → o retorno bruto será R; lucro = R - T
-  const lucroOne = R - T;
+    // Update saldo atual: saldoInicial stored separately; renderAll compute acum
+    save();
+    renderAll();
 
-  // se ambas vencerem → soma dos retornos brutos - T
-  const totalBothGross = (A1 * odd1) + (A2 * odd2);
-  const lucroBoth = totalBothGross - T;
+    // clear fields (except saldo inicial)
+    oddAEl.value=''; oddBEl.value=''; valorTotalEl.value=''; qtdPerdidasEl.value='0';
+    distInfo.innerHTML = 'Nenhum cálculo executado ainda.';
+    oneWin.innerHTML = '—';
+    bothWin.innerHTML = '—';
+  });
 
-  // percentuais sobre T
-  const pctOne = (lucroOne / T) * 100;
-  const pctBoth = (lucroBoth / T) * 100;
+  // Reset history
+  btnResetHist.addEventListener('click', ()=>{
+    if(!confirm('Resetar histórico apagará todas as apostas salvas. Deseja continuar?')) return;
+    history = [];
+    save();
+    renderAll();
+  });
 
-  return {
-    A1, A2, ret1, ret2, R, lucroOne, lucroBoth, pctOne, pctBoth, totalBothGross
+  // Apagar última aposta
+  btnApagarUlt.addEventListener('click', ()=>{
+    if(history.length === 0) { alert('Histórico vazio.'); return; }
+    if(!confirm('Remover a última aposta registrada?')) return;
+    history.pop();
+    save();
+    renderAll();
+  });
+
+  // initial load
+  load();
+
+  // expose for debugging (optional)
+  window.mx = {
+    getState: ()=>({saldoInicial,history}),
+    clearAll: ()=>{ localStorage.removeItem(KEY_SALDO); localStorage.removeItem(KEY_HISTORY); saldoInicial=0; history=[]; renderAll(); }
   };
-}
-
-$('btnCalcular').addEventListener('click', () => {
-  saveMultipliers();
-  const out = calcDistribution();
-  if(!out) return;
-  $('stake1').innerText = 'R$ ' + formatMoney(out.A1);
-  $('stake2').innerText = 'R$ ' + formatMoney(out.A2);
-  $('stake1Detail').innerText = `Retorno bruto se vencer: R$ ${formatMoney(out.ret1)} (R=${formatMoney(out.R)})`;
-  $('stake2Detail').innerText = `Retorno bruto se vencer: R$ ${formatMoney(out.ret2)} (R=${formatMoney(out.R)})`;
-
-  $('oneWin').innerText = `Lucro: R$ ${formatMoney(out.lucroOne)}`;
-  $('oneWinPct').innerText = `${out.pctOne.toFixed(2)}% sobre T`;
-
-  $('bothWin').innerText = `Lucro: R$ ${formatMoney(out.lucroBoth)}`;
-  $('bothWinPct').innerText = `${out.pctBoth.toFixed(2)}% sobre T`;
-});
-
-// Aposta concluída: verifica apostas perdidas e adiciona ao histórico, atualiza saldo
-$('btnApostaConcluida').addEventListener('click', () => {
-  saveMultipliers();
-  const T = parseFloat($('totalApostado').value) || 0;
-  if(!T || T <= 0){
-    alert('Informe o valor total a apostar antes de concluir a aposta.');
-    return;
-  }
-  const losses = parseInt($('apostasPerdidas').value, 10);
-  const mults = {
-    gain: parseFloat($('multGanho').value) || 1,
-    loss1: parseFloat($('mult1Perda').value) || 1,
-    loss2: parseFloat($('mult2Perda').value) || 1
-  };
-  // garante que os campos de odds/total foram calculados pelo menos uma vez
-  const out = calcDistribution();
-  if(!out) return;
-
-  let result = 0;
-  let note = '';
-  if(losses === 2){
-    // ambas perderam → prejuízo = -T
-    result = -T * mults.loss2;
-    note = '2 perdas';
-  } else if(losses === 1){
-    // apenas 1 ganhou → lucroOne
-    result = out.lucroOne * mults.loss1;
-    note = '1 perda';
-  } else {
-    // 0 perdas → ambas ganharam
-    result = out.lucroBoth * mults.gain;
-    note = '0 perdas (ambas ganharam)';
-  }
-
-  // montar histórico
-  const now = new Date();
-  const entry = {
-    date: now.toLocaleString('pt-BR'),
-    total: Number(T),
-    result: Number(Number(result).toFixed(2)),
-    pct: Number(((result / T) * 100).toFixed(4)),
-    note: note + ( $('team1').value || $('team2').value ? ` | ${$('team1').value || ''} vs ${$('team2').value || ''}` : '')
-  };
-
-  const history = JSON.parse(localStorage.getItem(stateKeys.history) || '[]');
-  history.push(entry);
-  localStorage.setItem(stateKeys.history, JSON.stringify(history));
-
-  // atualiza saldo inicial guardado (não alteramos saldoInicial em si — saldoAtual é calculado)
-  renderHistory();
-
-  // limpar campos (exceto: saldo inicial e multipliers)
-  resetFieldsKeepMultipliers();
-
-  alert('Aposta registrada no histórico.');
-});
-
-// Resetar campos, mas manter multiplicadores e saldo inicial
-function resetFieldsKeepMultipliers(){
-  // clear inputs that user asked to be reset: team names, odds, total, outputs and losses
-  $('team1').value = '';
-  $('team2').value = '';
-  $('odd1').value = '';
-  $('odd2').value = '';
-  $('totalApostado').value = '';
-  $('apostasPerdidas').value = '0';
-  // clear outputs
-  $('stake1').innerText = '-';
-  $('stake2').innerText = '-';
-  $('stake1Detail').innerText = '';
-  $('stake2Detail').innerText = '';
-  $('oneWin').innerText = '-';
-  $('bothWin').innerText = '-';
-  $('oneWinPct').innerText = '';
-  $('bothWinPct').innerText = '';
-}
-
-// resetar histórico (apagar tudo)
-$('btnResetHist').addEventListener('click', () => {
-  if(!confirm('Tem certeza que deseja resetar o histórico? Esta ação não pode ser desfeita.')) return;
-  localStorage.removeItem(stateKeys.history);
-  renderHistory();
-  updateSaldoAtual();
-});
-
-// apagar ultima aposta
-$('btnApagarUltima').addEventListener('click', () => {
-  const history = JSON.parse(localStorage.getItem(stateKeys.history) || '[]');
-  if(history.length === 0){ alert('Histórico vazio.'); return; }
-  if(!confirm('Apagar última aposta do histórico?')) return;
-  history.pop();
-  localStorage.setItem(stateKeys.history, JSON.stringify(history));
-  renderHistory();
-});
-
-// quando saldo inicial mudar, salvar e atualizar saldo atual
-$('saldoInicial').addEventListener('change', () => {
-  const si = parseFloat($('saldoInicial').value) || 0;
-  localStorage.setItem(stateKeys.saldoInicial, String(si));
-  updateSaldoAtual();
-});
-
-// multipliers save on change
-$('multGanho').addEventListener('change', saveMultipliers);
-$('mult1Perda').addEventListener('change', saveMultipliers);
-$('mult2Perda').addEventListener('change', saveMultipliers);
-
-// Inicializa
-loadState();
-
-// helper: attempts to preserve inputs between reloads (optional)
-window.addEventListener('beforeunload', () => {
-  // keep multipliers and saldoInicial persisted already
-});
-
+})();
 </script>
 </body>
 </html>
