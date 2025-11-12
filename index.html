@@ -1,4 +1,4 @@
-<!doctype html>
+              <!doctype html>
 <html lang="pt-BR">  
 <head>  
 <meta charset="utf-8" />  
@@ -61,6 +61,13 @@
     <div class="col small"><label>Odd 2</label><input id="oddB" type="number" step="0.01" min="1"/></div>  
     <div class="col small"><label>Valor total a apostar (R$)</label><input id="valorTotal" type="number" step="0.01" min="0" /></div>  
     <div class="col small"><label>Quantas apostas perderam?</label><input id="qtdPerdidas" type="number" step="1" min="0" max="2" value="0"/><div class="small-note">0, 1 ou 2</div></div>  
+  </div>  
+
+  <!-- APOSTA ÚNICA -->  
+  <div class="row" style="align-items:center; border-top:1px solid #eef2f9; padding-top:10px; margin-top:12px;">  
+    <div class="col small">  
+      <label><input type="checkbox" id="modoUnico" /> Usar aposta única (valor total em odd 1)</label>  
+    </div>  
   </div>  
 
   <!-- MULTIPLICADORES -->  
@@ -133,6 +140,7 @@
   const mult2Perdas=document.getElementById('mult2Perdas');  
   const mult1Perda=document.getElementById('mult1Perda');  
   const mult2Vitorias=document.getElementById('mult2Vitorias');  
+  const modoUnicoEl=document.getElementById('modoUnico');  
   
   const KEY_SALDO='mx_saldo';  
   const KEY_HIST='mx_hist';  
@@ -188,22 +196,31 @@
   function calcular(){  
     const o1=parseFloat(oddAEl.value), o2=parseFloat(oddBEl.value), T=parseFloat(valorTotalEl.value);  
     if(!(o1>0&&o2>0&&T>0)){alert('Preencha odds e valor total.');return null;}  
+
+    if (modoUnicoEl.checked) { 
+        // aposta única: todo valor na odd 1
+        const A1 = T, A2 = 0, R = A1*o1, profit1 = R-A1, profitBoth = profit1;
+        return {o1,o2,T,A1,A2,R,profit1,profitBoth, unico:true};
+    }
+
+    // distribuição proporcional normal
     const inv1=1/o1, inv2=1/o2, sumInv=inv1+inv2;  
     const A1=(T/o1)/sumInv, A2=(T/o2)/sumInv, R=T/sumInv;  
     const ret1=R, profit1=ret1-T, retBoth=A1*o1+A2*o2, profitBoth=retBoth-T;  
-    return {o1,o2,T,A1,A2,R,profit1,profitBoth};  
+    return {o1,o2,T,A1,A2,R,profit1,profitBoth, unico:false};  
   }  
   
   document.getElementById('btnCalcular').onclick=()=>{  
     const r=calcular(); if(!r)return;  
-    distInfo.innerHTML=`Stake 1: R$ ${fmt(r.A1)} (odd ${r.o1})<br>Stake 2: R$ ${fmt(r.A2)} (odd ${r.o2})`;  
+    if (r.unico) {
+        distInfo.innerHTML=`Stake único: R$ ${fmt(r.A1)} (odd ${r.o1})`;  
+    } else {
+        distInfo.innerHTML=`Stake 1: R$ ${fmt(r.A1)} (odd ${r.o1})<br>Stake 2: R$ ${fmt(r.A2)} (odd ${r.o2})`;  
+    }
     oneWin.innerHTML=`Lucro/Prejuízo: ${r.profit1>=0?'+':'-'}R$ ${fmt(Math.abs(r.profit1))}`;  
     bothWin.innerHTML=`Lucro/Prejuízo: ${r.profitBoth>=0?'+':'-'}R$ ${fmt(Math.abs(r.profitBoth))}`;  
   };  
 
-  // ============================
-  // BLOCO ATUALIZADO: BTN CONCLUIR
-  // ============================
   document.getElementById('btnConcluir').onclick = () => {
     const r = calcular(); 
     if (!r) return;
@@ -240,6 +257,8 @@
                 .find(h => h.resultado > 0);
             if (ultimaVencedora) {
                 baseValor = ultimaVencedora.valor;
+            } else {
+                baseValor = history[0].valor; // usa primeira aposta se não houver ganhadora anterior
             }
         }
     }
