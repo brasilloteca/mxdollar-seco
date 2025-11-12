@@ -75,17 +75,14 @@
     <div class="col small">  
       <label for="mult2Perdas">× 2 perdas</label>  
       <input id="mult2Perdas" type="number" step="0.01" min="0" value="1.00"/>  
-      <div class="small-note">Próxima aposta = valor × este fator</div>  
     </div>  
     <div class="col small">  
       <label for="mult1Perda">× 1 perda</label>  
       <input id="mult1Perda" type="number" step="0.01" min="0" value="1.00"/>  
-      <div class="small-note">Próxima aposta = valor × este fator</div>  
     </div>  
     <div class="col small">  
       <label for="mult2Vitorias">× 2 acertos</label>  
       <input id="mult2Vitorias" type="number" step="0.01" min="0" value="1.00"/>  
-      <div class="small-note">Próxima aposta = valor × este fator</div>  
     </div>  
   </div>  
 
@@ -194,29 +191,32 @@
   });  
   
   function calcular(){  
-    const o1=parseFloat(oddAEl.value), o2=parseFloat(oddBEl.value), T=parseFloat(valorTotalEl.value);  
-    if(!(o1>0&&o2>0&&T>0)){alert('Preencha odds e valor total.');return null;}  
+    const o1=parseFloat(oddAEl.value);  
+    const o2=parseFloat(oddBEl.value);  
+    const T=parseFloat(valorTotalEl.value);  
+    const unico=modoUnicoEl.checked;  
 
-    if (modoUnicoEl.checked) { 
-        // aposta única: todo valor na odd 1
-        const A1 = T, A2 = 0, R = A1*o1, profit1 = R-A1, profitBoth = profit1;
-        return {o1,o2,T,A1,A2,R,profit1,profitBoth, unico:true};
-    }
+    if (unico) {  
+      if (!(o1>0 && T>0)) { alert('Preencha pelo menos a Odd 1 e o valor total.'); return null; }  
+      const A1=T, A2=0, R=A1*o1, profit1=R-A1;  
+      return {o1,o2:0,T,A1,A2,R,profit1,profitBoth:profit1,unico:true};  
+    }  
 
-    // distribuição proporcional normal
+    if (!(o1>0&&o2>0&&T>0)){alert('Preencha ambas as odds e o valor total.');return null;}  
+
     const inv1=1/o1, inv2=1/o2, sumInv=inv1+inv2;  
     const A1=(T/o1)/sumInv, A2=(T/o2)/sumInv, R=T/sumInv;  
     const ret1=R, profit1=ret1-T, retBoth=A1*o1+A2*o2, profitBoth=retBoth-T;  
-    return {o1,o2,T,A1,A2,R,profit1,profitBoth, unico:false};  
+    return {o1,o2,T,A1,A2,R,profit1,profitBoth,unico:false};  
   }  
   
   document.getElementById('btnCalcular').onclick=()=>{  
     const r=calcular(); if(!r)return;  
-    if (r.unico) {
+    if (r.unico) {  
         distInfo.innerHTML=`Stake único: R$ ${fmt(r.A1)} (odd ${r.o1})`;  
-    } else {
+    } else {  
         distInfo.innerHTML=`Stake 1: R$ ${fmt(r.A1)} (odd ${r.o1})<br>Stake 2: R$ ${fmt(r.A2)} (odd ${r.o2})`;  
-    }
+    }  
     oneWin.innerHTML=`Lucro/Prejuízo: ${r.profit1>=0?'+':'-'}R$ ${fmt(Math.abs(r.profit1))}`;  
     bothWin.innerHTML=`Lucro/Prejuízo: ${r.profitBoth>=0?'+':'-'}R$ ${fmt(Math.abs(r.profitBoth))}`;  
   };  
@@ -252,21 +252,19 @@
 
         if (ultima.resultado > 0 && penultima.resultado < 0) {
             const ultimaVencedora = [...history]
-                .slice(0, history.length - 1) // exclui a última
+                .slice(0, history.length - 1)
                 .reverse()
                 .find(h => h.resultado > 0);
             if (ultimaVencedora) {
                 baseValor = ultimaVencedora.valor;
             } else {
-                baseValor = history[0].valor; // usa primeira aposta se não houver ganhadora anterior
+                baseValor = history[0].valor;
             }
         }
     }
 
-    // calcula próximo valor
     valorTotalEl.value = (baseValor * mult).toFixed(2);
 
-    // limpa odds
     oddAEl.value = '';
     oddBEl.value = '';
   };
