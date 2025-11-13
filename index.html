@@ -16,10 +16,12 @@
   .row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:center; }
   button {
     width:100%; margin-top:1rem; padding:0.75rem;
-    font-size:1rem; background:#111; color:#fff;
-    border:none; border-radius:8px; cursor:pointer;
+    font-size:1rem; color:#fff; border:none; border-radius:8px; cursor:pointer;
   }
-  button:hover { background:#333; }
+  button:hover { opacity:0.9; }
+  #btnCalcular { background:#007bff; }       /* Azul */
+  #btnConcluir { background:#28a745; }       /* Verde */
+  #btnResetarHistorico { background:#dc3545; } /* Vermelho */
   table { width:100%; border-collapse:collapse; margin-top:1rem; }
   th, td { border-bottom:1px solid #ddd; padding:0.5rem; text-align:center; font-size:0.9rem; }
   tr.win { background:#d4f8d4; }
@@ -91,7 +93,7 @@ const btnResetarHistorico = document.getElementById('btnResetarHistorico');
 
 let saldoInicial = 0;
 let history = [];
-let mults = { p1: 2.0, v2: 1.2 };
+let mults = { p1: 0, v2: 0 };
 
 function save() {
   localStorage.setItem('mx$-saldoInicial', saldoInicial);
