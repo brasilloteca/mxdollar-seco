@@ -195,29 +195,6 @@ multP1El.oninput = () => { mults.p1 = parseFloat(multP1El.value) || 1; save(); }
 multV2El.oninput = () => { mults.v2 = parseFloat(multV2El.value) || 1; save(); };
 
 load();
- <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyBzFbq5BOp_h4K5Xs9rC3utfaeSC5_i-3c",
-    authDomain: "mxdollar-versao1-0.firebaseapp.com",
-    projectId: "mxdollar-versao1-0",
-    storageBucket: "mxdollar-versao1-0.firebasestorage.app",
-    messagingSenderId: "766713134636",
-    appId: "1:766713134636:web:dcb2760fd04e2b9aafdb89",
-    measurementId: "G-SRM0J3JFFN"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
 </script>
 </body>
 </html>
