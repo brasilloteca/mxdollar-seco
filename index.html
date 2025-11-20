@@ -1,41 +1,101 @@
- <!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MX$ - Versão 1.0</title>
+
 <style>
   :root { font-family: Inter, Segoe UI, Helvetica, Arial, sans-serif; }
   body { background:#f6f7fb; color:#111; margin:0; padding:0; }
-  h1 { text-align:center; font-size:2rem; margin:1rem 0; }
-  main { max-width:700px; margin:auto; background:#fff; padding:1.5rem; border-radius:16px; box-shadow:0 0 10px #ccc; }
-  label { display:block; margin-top:1rem; font-weight:600; text-align:center; } /* Centralizado os labels */
+
+  /* LOGIN */
+  #login-container {
+    max-width:400px;
+    margin:60px auto;
+    background:#fff;
+    padding:2rem;
+    border-radius:12px;
+    box-shadow:0 0 10px #bbb;
+    text-align:center;
+    display:none;
+  }
+  #login-container input {
+    width:100%; padding:0.7rem; margin-top:0.5rem;
+    border-radius:8px; border:1px solid #ccc;
+  }
+  #login-container button {
+    width:100%; padding:0.8rem; margin-top:1rem;
+    border:none; border-radius:8px; cursor:pointer; color:#fff;
+  }
+  #btnLoginEmail { background:#007bff; }
+  #btnLoginGoogle { background:#db4437; }
+  #btnRegister { background:#28a745; }
+
+  #logoutBtn {
+    display:none;
+    background:#ff4444;
+    color:#fff;
+    padding:0.6rem 1rem;
+    border:none;
+    border-radius:8px;
+    margin:10px;
+    cursor:pointer;
+  }
+
+  /* SEU APP */
+  h1 { text-align:center; font-size:2rem; margin:1rem 0; display:none; }
+  main {
+    display:none;
+    max-width:700px; margin:auto; background:#fff; padding:1.5rem;
+    border-radius:16px; box-shadow:0 0 10px #ccc;
+  }
+
+  label { display:block; margin-top:1rem; font-weight:600; text-align:center; }
   input[type="number"], input[type="text"] {
     width:100%; padding:0.5rem; font-size:1rem; border:1px solid #ccc; border-radius:8px;
-    text-align:center; /* Centraliza os valores digitáveis */
+    text-align:center;
   }
+
   .row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:center; }
   button {
-    width:100%; margin-top:1rem; padding:0.75rem;
-    font-size:1rem; color:#fff; border:none; border-radius:8px; cursor:pointer;
+    width:100%; margin-top:1rem; padding:0.75rem; font-size:1rem;
+    color:#fff; border:none; border-radius:8px; cursor:pointer;
   }
-  button:hover { opacity:0.9; }
-  #btnCalcular { background:#007bff; }       /* Azul */
-  #btnConcluir { background:#28a745; }       /* Verde */
-  #btnResetarHistorico { background:#dc3545; } /* Vermelho */
+  #btnCalcular { background:#007bff; }
+  #btnConcluir { background:#28a745; }
+  #btnResetarHistorico { background:#dc3545; }
   table { width:100%; border-collapse:collapse; margin-top:1rem; }
   th, td { border-bottom:1px solid #ddd; padding:0.5rem; text-align:center; font-size:0.9rem; }
   tr.win { background:#d4f8d4; }
   tr.lose { background:#f9d0d0; }
-  #mults input { width:100%; text-align:center; }
   #history { margin-top:1rem; max-height:300px; overflow:auto; }
   #lostBox { display:flex; align-items:center; gap:0.5rem; margin-top:1rem; }
-  .row-buttons { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
 </style>
 </head>
+
 <body>
-<h1>MX$ - Versão 1.0</h1>
-<main>
+
+<!-- LOGOUT -->
+<button id="logoutBtn">Sair</button>
+
+<!-- LOGIN -->
+<div id="login-container">
+  <h2>Entrar no MX$</h2>
+
+  <input type="email" id="email" placeholder="Seu email" />
+  <input type="password" id="senha" placeholder="Sua senha" />
+
+  <button id="btnLoginEmail">Entrar com Email/Senha</button>
+  <button id="btnRegister">Criar Conta</button>
+  <button id="btnLoginGoogle">Entrar com Google</button>
+</div>
+
+<!-- TÍTULO DO APP -->
+<h1 id="titulo-app">MX$ - Versão 1.0</h1>
+
+<!-- SEU APP ORIGINAL -->
+<main id="app-container">
   <div class="row">
     <div>
       <label>Saldo inicial</label>
@@ -72,14 +132,72 @@
   <button id="btnCalcular">Calcular Retorno</button>
   <button id="btnConcluir">Aposta concluída</button>
 
-  <div class="row-buttons">
-    <button id="btnResetarHistorico">Resetar histórico</button>
-  </div>
+  <button id="btnResetarHistorico">Resetar histórico</button>
 
   <div id="resultado"></div>
   <div id="history"></div>
 </main>
 
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider,
+         signInWithPopup, createUserWithEmailAndPassword,
+         onAuthStateChanged, signOut }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBzFbq5BOp_h4K5Xs9rC3utfaeSC5_i-3c",
+  authDomain: "mxdollar-versao1-0.firebaseapp.com",
+  projectId: "mxdollar-versao1-0",
+  storageBucket: "mxdollar-versao1-0.firebasestorage.app",
+  messagingSenderId: "766713134636",
+  appId: "1:766713134636:web:dcb2760fd04e2b9aafdb89",
+  measurementId: "G-SRM0J3JFFN"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+const loginContainer = document.getElementById("login-container");
+const appContainer = document.getElementById("app-container");
+const tituloApp = document.getElementById("titulo-app");
+const logoutBtn = document.getElementById("logoutBtn");
+
+document.getElementById("btnLoginEmail").onclick = () => {
+  signInWithEmailAndPassword(auth, email.value, senha.value)
+    .catch(err => alert(err.message));
+};
+
+document.getElementById("btnRegister").onclick = () => {
+  createUserWithEmailAndPassword(auth, email.value, senha.value)
+    .catch(err => alert(err.message));
+};
+
+document.getElementById("btnLoginGoogle").onclick = () => {
+  signInWithPopup(auth, provider)
+    .catch(err => alert(err.message));
+};
+
+logoutBtn.onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    loginContainer.style.display = "none";
+    appContainer.style.display = "block";
+    tituloApp.style.display = "block";
+    logoutBtn.style.display = "block";
+  } else {
+    loginContainer.style.display = "block";
+    appContainer.style.display = "none";
+    tituloApp.style.display = "none";
+    logoutBtn.style.display = "none";
+  }
+});
+</script>
+
+<!-- SEU SCRIPT ORIGINAL -->
 <script>
 const saldoInicialEl = document.getElementById('saldoInicial');
 const saldoAtualEl = document.getElementById('saldoAtual');
@@ -90,7 +208,6 @@ const multV2El = document.getElementById('multV2');
 const chkPerdeu = document.getElementById('chkPerdeu');
 const resultadoEl = document.getElementById('resultado');
 const historyEl = document.getElementById('history');
-const btnResetarHistorico = document.getElementById('btnResetarHistorico');
 
 let saldoInicial = 0;
 let history = [];
@@ -156,6 +273,7 @@ document.getElementById('btnConcluir').onclick = () => {
   let mult = perdeu ? mults.p1 : mults.v2;
 
   let baseValor = valor;
+
   if (history.length >= 2) {
     const ultima = history[history.length - 1];
     const penultima = history[history.length - 2];
@@ -164,25 +282,19 @@ document.getElementById('btnConcluir').onclick = () => {
         .slice(0, history.length - 1)
         .reverse()
         .find(h => h.resultado > 0);
-      if (ultimaVencedora) {
-        baseValor = ultimaVencedora.valor;
-      } else {
-        baseValor = history[0].valor;
-      }
+      baseValor = ultimaVencedora ? ultimaVencedora.valor : history[0].valor;
     }
   }
 
   valorTotalEl.value = (baseValor * mult).toFixed(2);
-
   oddAEl.value = '';
   chkPerdeu.checked = false;
   resultadoEl.innerHTML = '';
-
   renderHistory();
   save();
 };
 
-btnResetarHistorico.onclick = () => {
+document.getElementById('btnResetarHistorico').onclick = () => {
   if (confirm('Deseja realmente apagar todo o histórico?')) {
     history = [];
     renderHistory();
@@ -196,5 +308,6 @@ multV2El.oninput = () => { mults.v2 = parseFloat(multV2El.value) || 1; save(); }
 
 load();
 </script>
+
 </body>
 </html>
