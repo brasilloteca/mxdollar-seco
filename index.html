@@ -139,12 +139,19 @@
 </main>
 
 <!-- FIREBASE -->
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider,
-         signInWithPopup, createUserWithEmailAndPassword,
-         onAuthStateChanged, signOut }
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  GoogleAuthProvider,
+  signInWithPopup, 
+  createUserWithEmailAndPassword,
+  onAuthStateChanged, 
+  signOut,
+  sendEmailVerification 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBzFbq5BOp_h4K5Xs9rC3utfaeSC5_i-3c",
@@ -165,30 +172,51 @@ const appContainer = document.getElementById("app-container");
 const tituloApp = document.getElementById("titulo-app");
 const logoutBtn = document.getElementById("logoutBtn");
 
+// LOGIN EMAIL/SENHA
 document.getElementById("btnLoginEmail").onclick = () => {
   signInWithEmailAndPassword(auth, email.value, senha.value)
-    .catch(err => alert(err.message));
+    .then((cred) => {
+      if (!cred.user.emailVerified) {
+        alert("Confirme seu email antes de entrar. Verifique sua caixa de entrada.");
+        signOut(auth);
+      }
+    })
+    .catch(err => alert("Erro: " + err.message));
 };
 
+// CRIAR CONTA
 document.getElementById("btnRegister").onclick = () => {
   createUserWithEmailAndPassword(auth, email.value, senha.value)
-    .catch(err => alert(err.message));
+    .then((cred) => {
+      sendEmailVerification(cred.user)
+        .then(() => {
+          alert("Conta criada com sucesso! Um email de verificação foi enviado.");
+          email.value = "";
+          senha.value = "";
+        })
+        .catch(e => alert("Erro ao enviar verificação: " + e.message));
+    })
+    .catch(err => alert("Erro: " + err.message));
 };
 
+// GOOGLE LOGIN
 document.getElementById("btnLoginGoogle").onclick = () => {
   signInWithPopup(auth, provider)
-    .catch(err => alert(err.message));
+    .catch(err => alert("Erro: " + err.message));
 };
 
+// SAIR
 logoutBtn.onclick = () => signOut(auth);
 
+// EXIBIR/OCULTAR TELAS
 onAuthStateChanged(auth, user => {
-  if (user) {
+  if (user && user.emailVerified) {
     loginContainer.style.display = "none";
     appContainer.style.display = "block";
     tituloApp.style.display = "block";
     logoutBtn.style.display = "block";
-  } else {
+  } 
+  else {
     loginContainer.style.display = "block";
     appContainer.style.display = "none";
     tituloApp.style.display = "none";
@@ -311,3 +339,5 @@ load();
 
 </body>
 </html>
+
+
