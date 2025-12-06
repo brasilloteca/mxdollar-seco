@@ -131,7 +131,7 @@ btnLogout.onclick = () => {
 auth.onAuthStateChanged(async user => {
   if (!user) {
     // não logado -> manda para login (ajuste se necessário)
-    window.location.href = '/app.html';
+    window.location.href = '/mxdollar-seco/app.html';
     return;
   }
 
@@ -144,7 +144,7 @@ auth.onAuthStateChanged(async user => {
 
     if (data && data.assinaturaAtiva) {
       // já assinante -> redireciona para app
-      window.location.href = '/app.html'; // ajuste conforme seu app
+      window.location.href = '/mxdollar-seco/app.html'; // ajuste conforme seu app
       return;
     }
 
