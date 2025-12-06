@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Planos — MX$</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --card:#fff;
+      --primary:#4f46e5;
+      --accent:#0ea5e9;
+      --muted:#6b7280;
+      --success:#10b981;
+    }
+    body{font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);margin:0;padding:28px;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+    .wrap{width:100%;max-width:980px;}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+    header h1{font-size:20px;margin:0;color:#111}
+    header button{background:#efefef;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+    .card{background:var(--card);border-radius:12px;padding:20px;box-shadow:0 6px 18px rgba(16,24,40,0.06);border:1px solid rgba(15,23,42,0.04)}
+    .card.feature{border:2px solid var(--primary);background:#fbf8ff}
+    .card h3{margin:0 0 8px 0;font-size:18px;color:#0f172a}
+    .desc{color:var(--muted);font-size:14px;margin-bottom:14px}
+    .price{font-weight:700;font-size:28px;margin-bottom:14px}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--accent));color:white;font-size:13px;margin-bottom:12px}
+    .btn{display:block;width:100%;padding:12px;border:0;border-radius:10px;font-size:16px;cursor:pointer}
+    .btn.primary{background:var(--primary);color:white}
+    .btn.ghost{background:transparent;border:1px solid #e6e6e6;color:#111}
+    .footer-note{margin-top:14px;font-size:13px;color:var(--muted)}
+    .status{margin-bottom:12px;color:var(--muted)}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;z-index:40}
+    .loader{background:white;padding:20px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Planos — MX$</h1>
+      <button id="btn-logout" style="display:none">Sair</button>
+    </header>
+
+    <div id="status" class="status">Checando conta...</div>
+
+    <div id="planos-wrap" style="display:none">
+      <div class="grid">
+        <div class="card">
+          <h3>Mensal</h3>
+          <div class="desc">Acesso total por 30 dias.</div>
+          <div class="price" id="price-mensal">R$ 19,90</div>
+          <button class="btn primary" data-plano="mensal" id="btn-mensal">Assinar Mensal</button>
+          <div class="footer-note">Renovação automática mensal.</div>
+        </div>
+
+        <div class="card">
+          <h3>Semestral</h3>
+          <div class="desc">Desconto por 6 meses — ótima relação custo/benefício.</div>
+          <div class="price" id="price-semestral">R$ 99,90</div>
+          <button class="btn primary" data-plano="semestral" id="btn-semestral">Assinar Semestral</button>
+          <div class="footer-note">Cobrança a cada 6 meses.</div>
+        </div>
+
+        <div class="card feature">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="badge">Mais vantajoso</div>
+            <h3 style="margin:0">Anual</h3>
+          </div>
+          <div class="desc">O melhor custo-benefício — acesso por 1 ano.</div>
+          <div class="price" id="price-anual">R$ 169,90</div>
+          <button class="btn primary" data-plano="anual" id="btn-anual">Assinar Anual</button>
+          <div class="footer-note">Economize no longo prazo.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- loading overlay -->
+  <div id="overlay" class="overlay" style="display:none">
+    <div class="loader" id="loader">
+      <div id="loader-text">Aguarde...</div>
+    </div>
+  </div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+/* ====== CONFIGURÁVEIS ======
+   Altere apenas essas constantes para ajustar labels e backend URL.
+*/
+const BACKEND_URL = 'https://p4wp85-3000.csb.app'; // <--- sua API
+const PRICE_LABEL_MENSAL = 'R$ 49,90';        // texto exibido no card
+const PRICE_LABEL_SEMESTRAL = 'R$ 239,90';
+const PRICE_LABEL_ANUAL = 'R$ 359,90';
+/* =========================== */
+
+/* Inicialize o Firebase (use sua configuração real do projeto) */
+const firebaseConfig = {
+  apiKey: "AIzaSyBzFbq5BOp_h4K5Xs9rC3utfaeSC5_i-3c",
+  authDomain: "mxdollar-versao1-0.firebaseapp.com",
+  projectId: "mxdollar-versao1-0"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* elementos */
+const statusEl = document.getElementById('status');
+const planosWrap = document.getElementById('planos-wrap');
+const overlay = document.getElementById('overlay');
+const loaderText = document.getElementById('loader-text');
+const btnLogout = document.getElementById('btn-logout');
+
+/* aplica labels fáceis de editar */
+document.getElementById('price-mensal').innerText = PRICE_LABEL_MENSAL;
+document.getElementById('price-semestral').innerText = PRICE_LABEL_SEMESTRAL;
+document.getElementById('price-anual').innerText = PRICE_LABEL_ANUAL;
+
+/* helper UI */
+function showLoading(txt='Aguarde...'){ loaderText.innerText = txt; overlay.style.display='flex'; }
+function hideLoading(){ overlay.style.display='none'; }
+
+/* logout button (se quiser) */
+btnLogout.onclick = () => {
+  auth.signOut().then(()=> location.href='/login.html');
+};
+
+/* Autenticação e checagem de assinatura no Firestore */
+auth.onAuthStateChanged(async user => {
+  if (!user) {
+    // não logado -> manda para login (ajuste se necessário)
+    window.location.href = '/app.html';
+    return;
+  }
+
+  btnLogout.style.display = 'inline-block';
+  statusEl.innerText = 'Usuário conectado. Verificando assinatura...';
+
+  try {
+    const doc = await db.collection('users').doc(user.uid).get();
+    const data = doc.exists ? doc.data() : null;
+
+    if (data && data.assinaturaAtiva) {
+      // já assinante -> redireciona para app
+      window.location.href = '/app.html'; // ajuste conforme seu app
+      return;
+    }
+
+    // não assinante -> mostra os planos
+    statusEl.style.display = 'none';
+    planosWrap.style.display = 'block';
+  } catch (err) {
+    console.error('Erro checando assinatura:', err);
+    statusEl.innerText = 'Erro ao verificar assinatura. Tente novamente mais tarde.';
+  }
+});
+
+/* Função que inicia checkout */
+async function iniciarCheckout(plano) {
+  const user = auth.currentUser;
+  if (!user) return alert('Usuário não autenticado.');
+
+  showLoading('Abrindo checkout...');
+  try {
+    const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        plano,
+        userEmail: user.email,
+        userId: user.uid
+      })
+    });
+
+    const data = await res.json();
+    hideLoading();
+
+    if (data && data.url) {
+      // redireciona para Stripe Checkout
+      window.location.href = data.url;
+    } else {
+      console.error('Resposta inválida do backend', data);
+      alert('Erro ao iniciar pagamento. Veja console para detalhes.');
+    }
+
+  } catch (err) {
+    hideLoading();
+    console.error('Erro ao chamar backend:', err);
+    alert('Erro ao conectar com o servidor.');
+  }
+}
+
+/* bind dos botões */
+document.getElementById('btn-mensal').onclick = () => iniciarCheckout('mensal');
+document.getElementById('btn-semestral').onclick = () => iniciarCheckout('semestral');
+document.getElementById('btn-anual').onclick = () => iniciarCheckout('anual');
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
