@@ -9,47 +9,45 @@
   :root { font-family: Inter, Segoe UI, Helvetica, Arial, sans-serif; }
   body { background:#f6f7fb; color:#111; margin:0; padding:0; }
 
-  /* LOGIN */
-  #login-container {
-    max-width:400px;
-    margin:60px auto;
-    background:#fff;
-    padding:2rem;
-    border-radius:12px;
-    box-shadow:0 0 10px #bbb;
-    text-align:center;
-    display:none;
+  /* HEADER / LOGOUT */
+  header {
+    max-width:1200px;
+    margin: 18px auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 1rem;
   }
-  #login-container input {
-    width:100%; padding:0.7rem; margin-top:0.5rem;
-    border-radius:8px; border:1px solid #ccc;
-  }
-  #login-container button {
-    width:100%; padding:0.8rem; margin-top:1rem;
-    border:none; border-radius:8px; cursor:pointer; color:#fff;
-  }
-  #btnLoginEmail { background:#007bff; }
-  #btnLoginGoogle { background:#db4437; }
-  #btnRegister { background:#28a745; }
-
   #logoutBtn {
-    display:none;
     background:#ff4444;
     color:#fff;
     padding:0.6rem 1rem;
     border:none;
     border-radius:8px;
-    margin:10px;
     cursor:pointer;
+    display:none;
   }
 
-  /* SEU APP */
-  h1 { text-align:center; font-size:2rem; margin:1rem 0; display:none; }
-  main {
-    display:none;
-    max-width:700px; margin:auto; background:#fff; padding:1.5rem;
-    border-radius:16px; box-shadow:0 0 10px #ccc;
+  /* LOGIN / LOADING MESSAGE */
+  #statusBox {
+    text-align:center;
+    margin-top:40px;
+    font-size:1rem;
+    color:#444;
   }
+
+  /* CONTAINER DO APP */
+  #app-wrapper {
+    display:none;
+    max-width:700px;
+    margin:20px auto;
+    background:#fff;
+    padding:1.5rem;
+    border-radius:16px;
+    box-shadow:0 0 10px #ccc;
+  }
+
+  h1 { text-align:center; font-size:2rem; margin:1rem 0; }
 
   label { display:block; margin-top:1rem; font-weight:600; text-align:center; }
   input[type="number"], input[type="text"] {
@@ -71,31 +69,28 @@
   tr.lose { background:#f9d0d0; }
   #history { margin-top:1rem; max-height:300px; overflow:auto; }
   #lostBox { display:flex; align-items:center; gap:0.5rem; margin-top:1rem; }
+
+  /* Responsivo */
+  @media (max-width:800px) {
+    .row { grid-template-columns:1fr; }
+  }
 </style>
 </head>
 
 <body>
 
-<!-- LOGOUT -->
-<button id="logoutBtn">Sair</button>
+<header>
+  <div style="font-weight:700;">MX$ — App</div>
+  <div>
+    <button id="logoutBtn">Sair</button>
+  </div>
+</header>
 
-<!-- LOGIN -->
-<div id="login-container">
-  <h2>Entrar no MX$</h2>
+<div id="statusBox">Carregando usuário...</div>
 
-  <input type="email" id="email" placeholder="Seu email" />
-  <input type="password" id="senha" placeholder="Sua senha" />
+<div id="app-wrapper" role="main">
+  <h1 id="titulo-app">MX$ - Versão 1.0</h1>
 
-  <button id="btnLoginEmail">Entrar com Email/Senha</button>
-  <button id="btnRegister">Criar Conta</button>
-  <button id="btnLoginGoogle">Entrar com Google</button>
-</div>
-
-<!-- TÍTULO DO APP -->
-<h1 id="titulo-app">MX$ - Versão 1.0</h1>
-
-<!-- SEU APP ORIGINAL -->
-<main id="app-container">
   <div class="row">
     <div>
       <label>Saldo inicial</label>
@@ -136,208 +131,206 @@
 
   <div id="resultado"></div>
   <div id="history"></div>
-</main>
+</div>
 
-<!-- FIREBASE -->
-
+<!-- Supabase client (ESM) -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
-  GoogleAuthProvider,
-  signInWithPopup, 
-  createUserWithEmailAndPassword,
-  onAuthStateChanged, 
-  signOut,
-  sendEmailVerification 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBzFbq5BOp_h4K5Xs9rC3utfaeSC5_i-3c",
-  authDomain: "mxdollar-versao1-0.firebaseapp.com",
-  projectId: "mxdollar-versao1-0",
-  storageBucket: "mxdollar-versao1-0.firebasestorage.app",
-  messagingSenderId: "766713134636",
-  appId: "1:766713134636:web:dcb2760fd04e2b9aafdb89",
-  measurementId: "G-SRM0J3JFFN"
-};
+  // ---------- CONFIGURAÇÕES (CONFIRME ESTES VALORES) ----------
+  const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
+  // ------------------------------------------------------------
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const loginContainer = document.getElementById("login-container");
-const appContainer = document.getElementById("app-container");
-const tituloApp = document.getElementById("titulo-app");
-const logoutBtn = document.getElementById("logoutBtn");
+  // Elementos do DOM
+  const statusBox = document.getElementById('statusBox');
+  const appWrapper = document.getElementById('app-wrapper');
+  const logoutBtn = document.getElementById('logoutBtn');
 
-// LOGIN EMAIL/SENHA
-document.getElementById("btnLoginEmail").onclick = () => {
-  signInWithEmailAndPassword(auth, email.value, senha.value)
-    .then((cred) => {
-      if (!cred.user.emailVerified) {
-        alert("Confirme seu email antes de entrar. Verifique sua caixa de entrada.");
-        signOut(auth);
+  // Seus elementos do app (mantive nomes originais)
+  const saldoInicialEl = document.getElementById('saldoInicial');
+  const saldoAtualEl = document.getElementById('saldoAtual');
+  const oddAEl = document.getElementById('oddA');
+  const valorTotalEl = document.getElementById('valorTotal');
+  const multP1El = document.getElementById('multP1');
+  const multV2El = document.getElementById('multV2');
+  const chkPerdeu = document.getElementById('chkPerdeu');
+  const resultadoEl = document.getElementById('resultado');
+  const historyEl = document.getElementById('history');
+
+  let saldoInicial = 0;
+  let history = [];
+  let mults = { p1: 0, v2: 0 };
+
+  // ---------- Autenticação / Sessão ----------
+  async function initAuthAndApp() {
+    try {
+      // pega sessão atual
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        // não logado — redireciona para login
+        window.location.href = 'login.html';
+        return;
       }
-    })
-    .catch(err => alert("Erro: " + err.message));
-};
 
-// CRIAR CONTA
-document.getElementById("btnRegister").onclick = () => {
-  createUserWithEmailAndPassword(auth, email.value, senha.value)
-    .then((cred) => {
-      sendEmailVerification(cred.user)
-        .then(() => {
-          alert("Conta criada com sucesso! Um email de verificação foi enviado.");
-          email.value = "";
-          senha.value = "";
-        })
-        .catch(e => alert("Erro ao enviar verificação: " + e.message));
-    })
-    .catch(err => alert("Erro: " + err.message));
-};
+      const user = session.user;
+      statusBox.innerText = `Olá, ${user.email}. Verificando assinatura...`;
 
-// GOOGLE LOGIN
-document.getElementById("btnLoginGoogle").onclick = () => {
-  signInWithPopup(auth, provider)
-    .catch(err => alert("Erro: " + err.message));
-};
+      // opcional: verificar assinatura ativa na tabela subscriptions
+      const { data: subs, error: subErr } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .order('current_period_end', { ascending: false })
+        .limit(1);
 
-// SAIR
-logoutBtn.onclick = () => signOut(auth);
+      if (subErr) {
+        console.error('Erro ao checar assinatura:', subErr);
+        // Não bloqueia o acesso por erro de consulta — você pode decidir o comportamento
+      }
 
-// EXIBIR/OCULTAR TELAS
-onAuthStateChanged(auth, user => {
-  if (user && user.emailVerified) {
-    loginContainer.style.display = "none";
-    appContainer.style.display = "block";
-    tituloApp.style.display = "block";
-    logoutBtn.style.display = "block";
-  } 
-  else {
-    loginContainer.style.display = "block";
-    appContainer.style.display = "none";
-    tituloApp.style.display = "none";
-    logoutBtn.style.display = "none";
-  }
-});
-</script>
+      const hasActiveSubscription = Array.isArray(subs) && subs.length > 0;
 
-<!-- SEU SCRIPT ORIGINAL -->
-<script>
-const saldoInicialEl = document.getElementById('saldoInicial');
-const saldoAtualEl = document.getElementById('saldoAtual');
-const oddAEl = document.getElementById('oddA');
-const valorTotalEl = document.getElementById('valorTotal');
-const multP1El = document.getElementById('multP1');
-const multV2El = document.getElementById('multV2');
-const chkPerdeu = document.getElementById('chkPerdeu');
-const resultadoEl = document.getElementById('resultado');
-const historyEl = document.getElementById('history');
+      if (!hasActiveSubscription) {
+        // redireciona para a página de planos (modifique se o arquivo de planos tiver outro nome)
+        statusBox.innerText = 'Nenhuma assinatura ativa encontrada. Redirecionando para planos...';
+        setTimeout(() => { window.location.href = 'plans.html'; }, 1500);
+        return;
+      }
 
-let saldoInicial = 0;
-let history = [];
-let mults = { p1: 0, v2: 0 };
+      // usuário validadado e com assinatura ativa — mostra app
+      statusBox.style.display = 'none';
+      appWrapper.style.display = 'block';
+      logoutBtn.style.display = 'inline-block';
 
-function save() {
-  localStorage.setItem('mx$-saldoInicial', saldoInicial);
-  localStorage.setItem('mx$-history', JSON.stringify(history));
-  localStorage.setItem('mx$-mults', JSON.stringify(mults));
-}
+      // inicializa o app (carrega dados salvos)
+      load();
 
-function load() {
-  saldoInicial = parseFloat(localStorage.getItem('mx$-saldoInicial')) || 0;
-  history = JSON.parse(localStorage.getItem('mx$-history') || '[]');
-  mults = JSON.parse(localStorage.getItem('mx$-mults') || '{"p1":2.0,"v2":1.2}');
-  saldoInicialEl.value = saldoInicial.toFixed(2);
-  multP1El.value = mults.p1;
-  multV2El.value = mults.v2;
-  renderHistory();
-}
-
-function renderHistory() {
-  let saldoAtual = saldoInicial;
-  let rows = history.map(h => {
-    saldoAtual += h.resultado;
-    const classe = h.resultado >= 0 ? 'win' : 'lose';
-    return `<tr class="${classe}">
-      <td>${h.data}</td>
-      <td>${h.valor.toFixed(2)}</td>
-      <td>${h.odd}</td>
-      <td>${h.resultado.toFixed(2)}</td>
-      <td>${saldoAtual.toFixed(2)}</td>
-    </tr>`;
-  }).join('');
-  historyEl.innerHTML = `<table>
-    <tr><th>Data</th><th>Valor</th><th>Odd</th><th>Resultado</th><th>Saldo</th></tr>
-    ${rows}
-  </table>`;
-  saldoAtualEl.value = saldoAtual.toFixed(2);
-}
-
-document.getElementById('btnCalcular').onclick = () => {
-  const odd = parseFloat(oddAEl.value);
-  const valor = parseFloat(valorTotalEl.value);
-  if (!odd || !valor) return alert('Preencha todos os campos');
-  const ganho = valor * odd - valor;
-  resultadoEl.innerHTML = `<p><b>Lucro em caso de acerto:</b> R$ ${ganho.toFixed(2)}</p>`;
-};
-
-document.getElementById('btnConcluir').onclick = () => {
-  const odd = parseFloat(oddAEl.value);
-  const valor = parseFloat(valorTotalEl.value);
-  if (!odd || !valor) return alert('Preencha os campos');
-
-  const perdeu = chkPerdeu.checked;
-  const resultado = perdeu ? -valor : (valor * odd - valor);
-
-  history.push({
-    data: new Date().toLocaleString('pt-BR'),
-    odd, valor, resultado
-  });
-
-  let mult = perdeu ? mults.p1 : mults.v2;
-
-  let baseValor = valor;
-
-  if (history.length >= 2) {
-    const ultima = history[history.length - 1];
-    const penultima = history[history.length - 2];
-    if (ultima.resultado > 0 && penultima.resultado < 0) {
-      const ultimaVencedora = [...history]
-        .slice(0, history.length - 1)
-        .reverse()
-        .find(h => h.resultado > 0);
-      baseValor = ultimaVencedora ? ultimaVencedora.valor : history[0].valor;
+    } catch (err) {
+      console.error('Erro initAuthAndApp:', err);
+      statusBox.innerText = 'Erro ao verificar sessão. Tente recarregar.';
     }
   }
 
-  valorTotalEl.value = (baseValor * mult).toFixed(2);
-  oddAEl.value = '';
-  chkPerdeu.checked = false;
-  resultadoEl.innerHTML = '';
-  renderHistory();
-  save();
-};
+  // logout
+  logoutBtn.onclick = async () => {
+    await supabase.auth.signOut();
+    window.location.href = 'login.html';
+  };
 
-document.getElementById('btnResetarHistorico').onclick = () => {
-  if (confirm('Deseja realmente apagar todo o histórico?')) {
-    history = [];
+  // observa mudanças de sessão (opcional)
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (!session) {
+      window.location.href = 'login.html';
+    }
+  });
+
+  // ---------- Storage local e funções do app (mantive seu código com pequenas melhorias) ----------
+  function save() {
+    localStorage.setItem('mx$-saldoInicial', saldoInicial);
+    localStorage.setItem('mx$-history', JSON.stringify(history));
+    localStorage.setItem('mx$-mults', JSON.stringify(mults));
+  }
+
+  function load() {
+    saldoInicial = parseFloat(localStorage.getItem('mx$-saldoInicial')) || 0;
+    history = JSON.parse(localStorage.getItem('mx$-history') || '[]');
+    try {
+      mults = JSON.parse(localStorage.getItem('mx$-mults') || '{"p1":2.0,"v2":1.2}');
+    } catch (e) {
+      mults = { p1: 2.0, v2: 1.2 };
+    }
+    saldoInicialEl.value = saldoInicial.toFixed(2);
+    multP1El.value = mults.p1;
+    multV2El.value = mults.v2;
+    renderHistory();
+  }
+
+  function renderHistory() {
+    let saldoAtual = saldoInicial;
+    let rows = history.map(h => {
+      saldoAtual += h.resultado;
+      const classe = h.resultado >= 0 ? 'win' : 'lose';
+      return `<tr class="${classe}">
+        <td>${h.data}</td>
+        <td>${h.valor.toFixed(2)}</td>
+        <td>${h.odd}</td>
+        <td>${h.resultado.toFixed(2)}</td>
+        <td>${saldoAtual.toFixed(2)}</td>
+      </tr>`;
+    }).join('');
+    historyEl.innerHTML = `<table>
+      <tr><th>Data</th><th>Valor</th><th>Odd</th><th>Resultado</th><th>Saldo</th></tr>
+      ${rows}
+    </table>`;
+    saldoAtualEl.value = saldoAtual.toFixed(2);
+  }
+
+  document.getElementById('btnCalcular').onclick = () => {
+    const odd = parseFloat(oddAEl.value);
+    const valor = parseFloat(valorTotalEl.value);
+    if (!odd || !valor) return alert('Preencha todos os campos');
+    const ganho = valor * odd - valor;
+    resultadoEl.innerHTML = `<p><b>Lucro em caso de acerto:</b> R$ ${ganho.toFixed(2)}</p>`;
+  };
+
+  document.getElementById('btnConcluir').onclick = () => {
+    const odd = parseFloat(oddAEl.value);
+    const valor = parseFloat(valorTotalEl.value);
+    if (!odd || !valor) return alert('Preencha os campos');
+
+    const perdeu = chkPerdeu.checked;
+    const resultado = perdeu ? -valor : (valor * odd - valor);
+
+    history.push({
+      data: new Date().toLocaleString('pt-BR'),
+      odd, valor, resultado
+    });
+
+    let mult = perdeu ? mults.p1 : mults.v2;
+
+    let baseValor = valor;
+
+    if (history.length >= 2) {
+      const ultima = history[history.length - 1];
+      const penultima = history[history.length - 2];
+      if (ultima.resultado > 0 && penultima.resultado < 0) {
+        const ultimaVencedora = [...history]
+          .slice(0, history.length - 1)
+          .reverse()
+          .find(h => h.resultado > 0);
+        baseValor = ultimaVencedora ? ultimaVencedora.valor : history[0].valor;
+      }
+    }
+
+    valorTotalEl.value = (baseValor * mult).toFixed(2);
+    oddAEl.value = '';
+    chkPerdeu.checked = false;
+    resultadoEl.innerHTML = '';
     renderHistory();
     save();
-  }
-};
+  };
 
-saldoInicialEl.oninput = () => { saldoInicial = parseFloat(saldoInicialEl.value) || 0; save(); };
-multP1El.oninput = () => { mults.p1 = parseFloat(multP1El.value) || 1; save(); };
-multV2El.oninput = () => { mults.v2 = parseFloat(multV2El.value) || 1; save(); };
+  document.getElementById('btnResetarHistorico').onclick = () => {
+    if (confirm('Deseja realmente apagar todo o histórico?')) {
+      history = [];
+      renderHistory();
+      save();
+    }
+  };
 
-load();
+  saldoInicialEl.oninput = () => { saldoInicial = parseFloat(saldoInicialEl.value) || 0; save(); };
+  multP1El.oninput = () => { mults.p1 = parseFloat(multP1El.value) || 1; save(); };
+  multV2El.oninput = () => { mults.v2 = parseFloat(multV2El.value) || 1; save(); };
+
+  // inicialização
+  initAuthAndApp();
+
 </script>
 
 </body>
 </html>
-
-
