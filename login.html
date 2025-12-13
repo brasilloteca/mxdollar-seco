@@ -4,10 +4,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login MX$</title>
+
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.29.0/dist/supabase.min.js"></script>
+
   <style>
-    body { font-family: Inter, Arial, sans-serif; background:#f6f7fb; margin:0; color:#111; display:flex; align-items:center; justify-content:center; height:100vh; flex-direction:column; }
-    button { padding:1rem 2rem; border:none; border-radius:10px; background:#4a90e2; color:#fff; font-size:1.1rem; cursor:pointer; }
+    body {
+      font-family: Inter, Arial, sans-serif;
+      background:#f6f7fb;
+      margin:0;
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      color:#111;
+    }
+    button {
+      padding:1rem 2rem;
+      border:none;
+      border-radius:10px;
+      background:#4a90e2;
+      color:#fff;
+      font-size:1.1rem;
+      cursor:pointer;
+    }
   </style>
 </head>
 <body>
@@ -17,24 +38,34 @@
 
 <script>
   const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
-  const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
 
-  // Se já estiver logado, redireciona direto para planos
-  supabase.auth.getSession().then(({ data }) => {
+  // ✅ OBJETO CORRETO
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  // Se já estiver logado, vai direto para planos
+  supabaseClient.auth.getSession().then(({ data }) => {
     if (data.session) {
       window.location.href = "plans.html";
     }
   });
 
   document.getElementById("loginGoogle").addEventListener("click", async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider: "google",
       options: {
-        redirectTo: 'https://brasilloteca.github.io/mxdollar-seco/plans.html'
+        redirectTo: "https://brasilloteca.github.io/mxdollar-seco/plans.html"
       }
     });
-    if (error) alert("Erro ao logar: " + error.message);
+
+    if (error) {
+      alert("Erro no login: " + error.message);
+      console.error(error);
+    }
   });
 </script>
 
