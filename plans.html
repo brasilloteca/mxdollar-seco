@@ -4,92 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Planos MX$</title>
-
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.29.0/dist/supabase.min.js"></script>
-
-  <!-- Stripe -->
   <script src="https://js.stripe.com/v3/"></script>
-
   <style>
-    body {
-      font-family: Inter, Arial, sans-serif;
-      background: #f6f7fb;
-      margin: 0;
-      color: #111;
-    }
-
-    header {
-      background: #4a90e2;
-      color: #fff;
-      padding: 2.5rem 1rem;
-      text-align: center;
-    }
-
-    .plans {
-      max-width: 1000px;
-      margin: 3rem auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1.5rem;
-      padding: 0 1rem;
-    }
-
-    .plan {
-      background: #fff;
-      border-radius: 14px;
-      padding: 2rem 1.5rem;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-      text-align: center;
-    }
-
-    .plan h2 {
-      margin: 0 0 0.5rem;
-    }
-
-    .price {
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin: 1rem 0;
-      color: #4a90e2;
-    }
-
-    .desc {
-      font-size: 0.95rem;
-      color: #555;
-      margin-bottom: 1.5rem;
-    }
-
-    button {
-      padding: 0.9rem;
-      border: none;
-      border-radius: 10px;
-      background: #4a90e2;
-      color: #fff;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #357abd;
-    }
-
-    .loading {
-      text-align: center;
-      margin-top: 3rem;
-      font-size: 1.1rem;
-    }
-
-    footer {
-      text-align: center;
-      padding: 2rem 1rem;
-      color: #666;
-      font-size: 0.9rem;
-    }
+    body { font-family: Inter, Arial, sans-serif; background:#f6f7fb; margin:0; color:#111; }
+    header { background:#4a90e2; color:#fff; padding:2.5rem 1rem; text-align:center; }
+    .plans { max-width:1000px; margin:3rem auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.5rem; padding:0 1rem; }
+    .plan { background:#fff; border-radius:14px; padding:2rem 1.5rem; box-shadow:0 10px 25px rgba(0,0,0,0.08); text-align:center; }
+    .price { font-size:1.8rem; font-weight:700; margin:1rem 0; color:#4a90e2; }
+    button { padding:0.9rem; border:none; border-radius:10px; background:#4a90e2; color:#fff; font-size:1rem; cursor:pointer; }
+    .loading { text-align:center; margin-top:3rem; font-size:1.1rem; }
+    footer { text-align:center; padding:2rem 1rem; color:#666; font-size:0.9rem; }
   </style>
 </head>
-
 <body>
+
 <header>
   <h1>Escolha seu plano MX$</h1>
   <p>Acesso completo ao app enquanto sua assinatura estiver ativa</p>
@@ -101,62 +30,47 @@
   <div class="plan">
     <h2>Mensal</h2>
     <div class="price">R$ 49,90</div>
-    <div class="desc">Ideal para testar o app sem compromisso</div>
     <button data-price="price_1Sb2liIrLyzh0kTrj2sUPVQp">Assinar</button>
   </div>
-
   <div class="plan">
     <h2>Semestral</h2>
     <div class="price">R$ 239,90</div>
-    <div class="desc">Economia e acesso por 6 meses</div>
     <button data-price="price_1Sb2liIrLyzh0kTr2jzoWNjW">Assinar</button>
   </div>
-
   <div class="plan">
     <h2>Anual</h2>
     <div class="price">R$ 359,90</div>
-    <div class="desc">Melhor custo-benefício (12 meses)</div>
     <button data-price="price_1Sb2liIrLyzh0kTrtoYXI7TV">Assinar</button>
   </div>
 </section>
 
-<footer>
-  © MX$ • Pagamentos seguros via Stripe
-</footer>
+<footer>© MX$ • Pagamentos seguros via Stripe</footer>
 
 <script>
   const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
+  const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const stripe = Stripe("pk_test_51SX5qDIrLyzh0kTrlUoIADRWlzgMIYQh827VH5rUG0r4B32nN56SfmP2Wn7kBS9ltkeF8b7romn3leJH0Dc04rOk00PZY5X4hZ");
 
-  let currentUser = null;
-
   async function init() {
-    const { data, error } = await supabase.auth.getSession();
+    const { data } = await supabase.auth.getSession();
 
-    if (error || !data?.session?.user) {
+    if (!data.session) {
       window.location.href = "login.html";
       return;
     }
 
-    currentUser = data.session.user;
+    const currentUser = data.session.user;
 
     document.getElementById("loading").style.display = "none";
     document.getElementById("plans").style.display = "grid";
-  }
 
-  init();
+    document.querySelectorAll("button[data-price]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        btn.innerText = "Redirecionando...";
 
-  // Checkout Stripe
-  document.querySelectorAll("button[data-price]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      btn.disabled = true;
-      btn.innerText = "Redirecionando...";
-
-      try {
         const res = await fetch(
           "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session-",
           {
@@ -177,15 +91,16 @@
         if (data.sessionId) {
           stripe.redirectToCheckout({ sessionId: data.sessionId });
         } else {
-          throw new Error("Sessão Stripe inválida");
+          alert("Erro ao iniciar pagamento");
+          btn.disabled = false;
+          btn.innerText = "Assinar";
         }
-      } catch (err) {
-        alert("Erro ao iniciar pagamento");
-        btn.disabled = false;
-        btn.innerText = "Assinar";
-      }
+      });
     });
-  });
+  }
+
+  init();
 </script>
+
 </body>
 </html>
