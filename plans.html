@@ -110,31 +110,59 @@
 
 <script>
   const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
-  const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
 
   const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
   );
 
-  const stripe = Stripe("SUA_PUBLIC_KEY_STRIPE");
+  const stripe = Stripe(
+    "pk_test_51SX5qDIrLyzh0kTrlUoIADRWlzgMIYQh827VH5rUG0r4B32nN56SfmP2Wn7kBS9ltkeF8b7romn3leJH0Dc04rOk00PZY5X4hZ"
+  );
 
   let currentUser = null;
+  let resolved = false;
 
-  async function init() {
-    const { data, error } = await supabaseClient.auth.getSession();
-
-    if (error || !data.session) {
-      window.location.href = "login.html";
-      return;
-    }
-
-    currentUser = data.session.user;
-
+  function showPlans(user) {
+    if (resolved) return;
+    resolved = true;
+    currentUser = user;
     document.getElementById("loading").style.display = "none";
     document.getElementById("plans").style.display = "grid";
   }
 
+  function redirectLogin() {
+    if (resolved) return;
+    resolved = true;
+    window.location.href = "login.html";
+  }
+
+  // Listener principal (mais confiável)
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (session?.user) {
+      showPlans(session.user);
+    }
+  });
+
+  // Fallback
+  setTimeout(async () => {
+    if (resolved) return;
+    const { data } = await supabaseClient.auth.getSession();
+    if (data?.session?.user) {
+      showPlans(data.session.user);
+    } else {
+      redirectLogin();
+    }
+  }, 600);
+
+  // Segurança anti-loop
+  setTimeout(() => {
+    if (!resolved) redirectLogin();
+  }, 3000);
+
+  // Checkout Stripe
   document.querySelectorAll("button[data-price]").forEach(btn => {
     btn.addEventListener("click", async () => {
       btn.disabled = true;
@@ -166,8 +194,6 @@
       }
     });
   });
-
-  init();
 </script>
 
 </body>
