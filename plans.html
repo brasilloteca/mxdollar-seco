@@ -112,22 +112,28 @@
   const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
   const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
 
-  const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
   const stripe = Stripe("SUA_PUBLIC_KEY_STRIPE");
 
   let currentUser = null;
 
-  // 🔐 ESCUTA LOGIN CORRETAMENTE
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (!session) {
+  async function init() {
+    const { data, error } = await supabaseClient.auth.getSession();
+
+    if (error || !data.session) {
       window.location.href = "login.html";
       return;
     }
 
-    currentUser = session.user;
+    currentUser = data.session.user;
+
     document.getElementById("loading").style.display = "none";
     document.getElementById("plans").style.display = "grid";
-  });
+  }
 
   document.querySelectorAll("button[data-price]").forEach(btn => {
     btn.addEventListener("click", async () => {
@@ -160,6 +166,8 @@
       }
     });
   });
+
+  init();
 </script>
 
 </body>
