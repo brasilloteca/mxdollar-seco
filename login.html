@@ -2,10 +2,9 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login MX$</title>
 
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.29.0/dist/supabase.min.js"></script>
 
   <style>
@@ -17,56 +16,109 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      flex-direction:column;
-      color:#111;
+    }
+    .box {
+      background:#fff;
+      padding:2rem;
+      border-radius:12px;
+      width:320px;
+      box-shadow:0 10px 25px rgba(0,0,0,.1);
+      text-align:center;
+    }
+    input {
+      width:100%;
+      padding:.8rem;
+      margin-bottom:1rem;
+      border-radius:8px;
+      border:1px solid #ccc;
     }
     button {
-      padding:1rem 2rem;
+      width:100%;
+      padding:.8rem;
       border:none;
-      border-radius:10px;
+      border-radius:8px;
       background:#4a90e2;
       color:#fff;
-      font-size:1.1rem;
+      font-size:1rem;
       cursor:pointer;
+      margin-bottom:.6rem;
+    }
+    .google {
+      background:#fff;
+      color:#444;
+      border:1px solid #ccc;
     }
   </style>
 </head>
 <body>
 
-<h1>Login MX$</h1>
-<button id="loginGoogle">Entrar com Google</button>
+<div class="box">
+  <h2>Login MX$</h2>
+
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Senha">
+
+  <button id="emailLogin">Entrar / Criar conta</button>
+
+  <hr>
+
+  <button id="googleLogin" class="google">Entrar com Google</button>
+</div>
 
 <script>
   const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
   const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
 
-  // ✅ OBJETO CORRETO
   const supabaseClient = supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
   );
 
-  // Se já estiver logado, vai direto para planos
+  // 🔁 Se já estiver logado
   supabaseClient.auth.getSession().then(({ data }) => {
     if (data.session) {
       window.location.href = "plans.html";
     }
   });
 
-  document.getElementById("loginGoogle").addEventListener("click", async () => {
+  // 📧 Email + senha (cria conta automaticamente)
+  document.getElementById("emailLogin").onclick = async () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    let { error } = await supabaseClient.auth.signInWithPassword({
+      email, password
+    });
+
+    if (error) {
+      const { error: signUpError } =
+        await supabaseClient.auth.signUp({ email, password });
+
+      if (signUpError) {
+        alert(signUpError.message);
+        return;
+      }
+    }
+
+    window.location.href = "plans.html";
+  };
+
+  // 🔐 Google OAuth (redirect)
+  document.getElementById("googleLogin").onclick = async () => {
     const { error } = await supabaseClient.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://brasilloteca.github.io/mxdollar-seco/plans.html"
+        redirectTo:
+          "https://brasilloteca.github.io/mxdollar-seco/plans.html"
       }
     });
 
     if (error) {
-      alert("Erro no login: " + error.message);
+      alert(error.message);
       console.error(error);
     }
-  });
+  };
 </script>
 
 </body>
