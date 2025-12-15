@@ -1,31 +1,39 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Autenticando...</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.29.0/dist/supabase.min.js"></script>
 </head>
 <body>
+  <p>Finalizando login...</p>
 
-<p style="font-family:Arial;text-align:center;margin-top:50px;">
-  Finalizando login...
-</p>
+  <script>
+    const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
 
-<script>
-  const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
+    const supabase = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
 
-  const supabaseClient = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
+    async function finishLogin() {
+      const { error } = await supabase.auth.exchangeCodeForSession(
+        window.location.href
+      );
 
-  // IMPORTANTE: força o Supabase a processar o hash OAuth
-  supabaseClient.auth.getSession().then(() => {
-    window.location.href = "plans.html";
-  });
-</script>
+      if (error) {
+        console.error(error);
+        document.body.innerText = "Erro ao autenticar.";
+        return;
+      }
 
+      // Login concluído com sessão válida
+      window.location.href = "plans.html";
+    }
+
+    finishLogin();
+  </script>
 </body>
 </html>
