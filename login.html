@@ -2,41 +2,41 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login • MX$</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Supabase v2 CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.29.0/dist/supabase.min.js"></script>
 
   <style>
     body {
       font-family: Inter, Arial, sans-serif;
       background: #f6f7fb;
-      margin: 0;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       height: 100vh;
+      margin: 0;
     }
 
-    .login-box {
+    .box {
       background: #fff;
       padding: 2rem;
+      border-radius: 14px;
       width: 100%;
       max-width: 380px;
-      border-radius: 14px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
 
     h1 {
-      margin-bottom: 1rem;
-      color: #333;
+      text-align: center;
+      margin-bottom: 1.5rem;
     }
 
     input {
       width: 100%;
-      padding: 0.75rem;
-      margin: 0.5rem 0;
+      padding: 0.8rem;
+      margin-bottom: 0.8rem;
       border-radius: 8px;
       border: 1px solid #ccc;
       font-size: 1rem;
@@ -44,43 +44,41 @@
 
     button {
       width: 100%;
-      padding: 0.8rem;
-      margin-top: 0.75rem;
+      padding: 0.9rem;
+      border-radius: 10px;
       border: none;
-      border-radius: 8px;
+      background: #4a90e2;
+      color: #fff;
       font-size: 1rem;
       cursor: pointer;
-      color: #fff;
+      margin-top: 0.5rem;
     }
 
-    #emailLogin {
-      background: #4a90e2;
-    }
-
-    #googleLogin {
-      background: #db4437;
+    .google {
+      background: #000;
     }
 
     .msg {
       margin-top: 1rem;
-      font-size: 0.9rem;
-      color: #555;
+      text-align: center;
+      font-size: 0.95rem;
+      color: #c00;
     }
   </style>
 </head>
 
 <body>
 
-<div class="login-box">
+<div class="box">
   <h1>Entrar no MX$</h1>
 
-  <input type="email" id="email" placeholder="Seu email" />
-  <input type="password" id="password" placeholder="Sua senha" />
+  <input id="email" type="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Senha" />
 
-  <button id="emailLogin">Entrar / Criar conta</button>
-  <button id="googleLogin">Entrar com Google</button>
+  <button id="emailLogin">Entrar com Email</button>
+  <button id="googleLogin" class="google">Entrar com Google</button>
 
-  <div class="msg" id="msg"></div>
+  <div id="msg" class="msg"></div>
 </div>
 
 <script>
@@ -88,61 +86,37 @@
   const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
 
-  const supabaseClient = supabase.createClient(
+  const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
   );
 
   const msg = document.getElementById("msg");
 
-  // 🔐 LOGIN / CADASTRO EMAIL
+  // LOGIN EMAIL
   document.getElementById("emailLogin").onclick = async () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+    msg.innerText = "Entrando...";
 
-    if (!email || !password) {
-      msg.innerText = "Preencha email e senha.";
-      return;
-    }
-
-    msg.innerText = "Processando...";
-
-    // tenta login
-    let { error } = await supabaseClient.auth.signInWithPassword({
-      email,
-      password
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email: document.getElementById("email").value,
+      password: document.getElementById("password").value
     });
 
-    // se não existir, cria
     if (error) {
-      const res = await supabaseClient.auth.signUp({
-        email,
-        password
-      });
-
-      if (res.error) {
-        msg.innerText = res.error.message;
-        return;
-      }
+      msg.innerText = error.message;
+    } else {
+      window.location.href = "plans.html";
     }
-
-    window.location.href = "plans.html";
   };
 
-  // 🔵 LOGIN GOOGLE (COM CALLBACK)
+  // LOGIN GOOGLE
   document.getElementById("googleLogin").onclick = async () => {
-    const { error } = await supabaseClient.auth.signInWithOAuth({
+    await supabaseClient.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo:
-          "https://brasilloteca.github.io/mxdollar-seco/auth-callback.html"
+        redirectTo: "https://brasilloteca.github.io/mxdollar-seco/plans.html"
       }
     });
-
-    if (error) {
-      alert(error.message);
-      console.error(error);
-    }
   };
 </script>
 
