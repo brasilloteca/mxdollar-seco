@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <title>Login MX$</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login • MX$</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.29.0/dist/supabase.min.js"></script>
 
@@ -15,6 +15,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
 
     .box {
@@ -23,95 +24,100 @@
       border-radius: 12px;
       width: 100%;
       max-width: 380px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 30px rgba(0,0,0,.1);
       text-align: center;
     }
 
     input {
       width: 100%;
-      padding: 0.8rem;
-      margin: 0.5rem 0;
+      padding: .8rem;
+      margin-bottom: .8rem;
       border-radius: 8px;
       border: 1px solid #ccc;
+      font-size: 1rem;
     }
 
     button {
       width: 100%;
-      padding: 0.9rem;
-      margin-top: 0.8rem;
+      padding: .9rem;
       border: none;
       border-radius: 8px;
       background: #4a90e2;
       color: #fff;
       font-size: 1rem;
       cursor: pointer;
+      margin-bottom: .6rem;
     }
 
     .google {
-      background: #111;
+      background: #000;
+    }
+
+    .msg {
+      margin-top: 1rem;
+      font-size: .9rem;
+      color: #c00;
     }
   </style>
 </head>
-
 <body>
-  <div class="box">
-    <h2>Entrar no MX$</h2>
 
-    <input id="email" type="email" placeholder="Email" />
-    <input id="password" type="password" placeholder="Senha" />
+<div class="box">
+  <h2>Entrar no MX$</h2>
 
-    <button id="emailLogin">Entrar com Email</button>
+  <input id="email" type="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Senha" />
 
-    <hr style="margin:1.5rem 0" />
+  <button onclick="loginEmail()">Entrar com email</button>
+  <button class="google" onclick="loginGoogle()">Entrar com Google</button>
 
-    <button id="googleLogin" class="google">Entrar com Google</button>
-  </div>
+  <div id="msg" class="msg"></div>
+</div>
 
-  <script>
-    const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
-    const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
+<script>
+  const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
 
-    const supabase = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY,
-      {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true
-        }
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
       }
-    );
+    }
+  );
 
-    // 🔐 Email + senha
-    document.getElementById("emailLogin").onclick = async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+  async function loginEmail() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
-      if (error) {
-        alert(error.message);
-        return;
+    if (error) {
+      document.getElementById("msg").innerText = error.message;
+      return;
+    }
+
+    window.location.href = "plans.html";
+  }
+
+  async function loginGoogle() {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo:
+          "https://brasilloteca.github.io/mxdollar-seco/plans.html"
       }
+    });
+  }
+</script>
 
-      window.location.href = "plans.html";
-    };
-
-    // 🔑 Google OAuth (ABSOLUTO)
-    document.getElementById("googleLogin").onclick = async () => {
-      await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo:
-            "https://brasilloteca.github.io/mxdollar-seco/auth-callback.html"
-        }
-      });
-    };
-  </script>
 </body>
 </html>
