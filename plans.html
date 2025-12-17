@@ -5,10 +5,7 @@
   <title>Planos MX$</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.29.0/dist/supabase.min.js"></script>
-
-  <!-- Stripe -->
   <script src="https://js.stripe.com/v3/"></script>
 
   <style>
@@ -22,14 +19,20 @@
     header {
       background: #4a90e2;
       color: #fff;
-      padding: 2.5rem 1rem;
+      padding: 2rem;
       text-align: center;
+    }
+
+    .loading {
+      text-align: center;
+      margin: 3rem;
+      font-size: 1.1rem;
     }
 
     .plans {
       max-width: 1000px;
       margin: 3rem auto;
-      display: grid;
+      display: none;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 1.5rem;
       padding: 0 1rem;
@@ -38,153 +41,64 @@
     .plan {
       background: #fff;
       border-radius: 14px;
-      padding: 2rem 1.5rem;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      padding: 2rem;
       text-align: center;
-    }
-
-    .price {
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin: 1rem 0;
-      color: #4a90e2;
+      box-shadow: 0 10px 25px rgba(0,0,0,.08);
     }
 
     button {
-      width: 100%;
-      padding: 0.9rem;
+      padding: .9rem;
       border: none;
       border-radius: 10px;
       background: #4a90e2;
       color: #fff;
-      font-size: 1rem;
       cursor: pointer;
-    }
-
-    .loading {
-      text-align: center;
-      margin-top: 3rem;
-      font-size: 1.1rem;
-    }
-
-    footer {
-      text-align: center;
-      padding: 2rem 1rem;
-      color: #666;
-      font-size: 0.9rem;
     }
   </style>
 </head>
-
 <body>
 
 <header>
   <h1>Escolha seu plano MX$</h1>
-  <p>Acesso completo ao app enquanto sua assinatura estiver ativa</p>
 </header>
 
-<div id="loading" class="loading">Verificando login...</div>
+<div id="loading" class="loading">Finalizando login...</div>
 
-<section id="plans" class="plans" style="display:none;">
+<section id="plans" class="plans">
   <div class="plan">
     <h2>Mensal</h2>
-    <div class="price">R$ 49,90</div>
+    <p>R$ 49,90</p>
     <button data-price="price_1Sb2liIrLyzh0kTrj2sUPVQp">Assinar</button>
-  </div>
-
-  <div class="plan">
-    <h2>Semestral</h2>
-    <div class="price">R$ 239,90</div>
-    <button data-price="price_1Sb2liIrLyzh0kTr2jzoWNjW">Assinar</button>
-  </div>
-
-  <div class="plan">
-    <h2>Anual</h2>
-    <div class="price">R$ 359,90</div>
-    <button data-price="price_1Sb2liIrLyzh0kTrtoYXI7TV">Assinar</button>
   </div>
 </section>
 
-<footer>
-  © MX$ • Pagamentos seguros via Stripe
-</footer>
-
 <script>
-  // ===============================
-  // CONFIGURAÇÕES
-  // ===============================
   const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
   const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
 
-  const STRIPE_PUBLIC_KEY =
-    "pk_test_51SX5qDIrLyzh0kTrlUoIADRWlzgMIYQh827VH5rUG0r4B32nN56SfmP2Wn7kBS9ltkeF8b7romn3leJH0Dc04rOk00PZY5X4hZ";
-
-  const CHECKOUT_ENDPOINT =
-    "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session-";
-
-  // ===============================
-  // INIT
-  // ===============================
   const supabase = window.supabase.createClient(
     SUPABASE_URL,
-    SUPABASE_ANON_KEY
+    SUPABASE_ANON_KEY,
+    {
+      auth: {
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    }
   );
-
-  const stripe = Stripe(STRIPE_PUBLIC_KEY);
-
-  let currentUser = null;
 
   async function init() {
     const { data } = await supabase.auth.getSession();
 
-    if (!data.session || !data.session.user) {
+    if (!data.session) {
       window.location.href = "login.html";
       return;
     }
 
-    currentUser = data.session.user;
-
     document.getElementById("loading").style.display = "none";
     document.getElementById("plans").style.display = "grid";
   }
-
-  // ===============================
-  // STRIPE CHECKOUT
-  // ===============================
-  document.querySelectorAll("button[data-price]").forEach(button => {
-    button.addEventListener("click", async () => {
-      button.disabled = true;
-      button.innerText = "Redirecionando...";
-
-      try {
-        const res = await fetch(CHECKOUT_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-          },
-          body: JSON.stringify({
-            priceId: button.dataset.price,
-            userId: currentUser.id
-          })
-        });
-
-        const data = await res.json();
-
-        if (data.sessionId) {
-          stripe.redirectToCheckout({ sessionId: data.sessionId });
-        } else {
-          throw new Error("Sessão inválida");
-        }
-      } catch (err) {
-        alert("Erro ao iniciar pagamento");
-        console.error(err);
-        button.disabled = false;
-        button.innerText = "Assinar";
-      }
-    });
-  });
 
   init();
 </script>
