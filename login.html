@@ -5,7 +5,6 @@
   <title>Login • MX$</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Supabase UMD -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
@@ -13,38 +12,31 @@
       font-family: Arial, sans-serif;
       background: #f6f7fb;
       margin: 0;
-      padding: 20px;
-    }
-
-    .wrapper {
-      max-width: 360px;
-      margin: 40px auto;
+      padding: 30px;
     }
 
     .box {
+      max-width: 360px;
+      margin: 60px auto;
       background: #fff;
-      padding: 1.5rem;
+      padding: 20px;
       border-radius: 12px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      position: relative;
-      z-index: 10;
     }
 
     input, button {
       width: 100%;
-      padding: 0.9rem;
-      margin-top: 0.7rem;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 16px;
       border-radius: 8px;
       border: 1px solid #ccc;
-      font-size: 1rem;
-      pointer-events: auto;
     }
 
     button {
       background: #4a90e2;
       color: #fff;
       border: none;
-      cursor: pointer;
     }
 
     .google {
@@ -52,42 +44,39 @@
       color: #000;
       border: 1px solid #ccc;
     }
-
-    hr {
-      margin: 1rem 0;
-    }
   </style>
 </head>
 <body>
 
-<div class="wrapper">
-  <div class="box">
-    <h2>Entrar no MX$</h2>
+<div class="box">
+  <h2>Entrar no MX$</h2>
 
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Senha">
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Senha">
 
-    <button id="emailBtn">Entrar / Criar conta</button>
+  <!-- EVENTO INLINE -->
+  <button onclick="loginEmail()">Entrar / Criar conta</button>
 
-    <hr>
+  <hr>
 
-    <button id="googleBtn" class="google">Entrar com Google</button>
-  </div>
+  <!-- EVENTO INLINE -->
+  <button class="google" onclick="loginGoogle()">Entrar com Google</button>
 </div>
 
 <script>
   alert("JS carregou");
 
   const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
-  const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
 
   const supabase = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
   );
 
-  document.getElementById("emailBtn").onclick = async () => {
-    alert("Email clicado");
+  async function loginEmail() {
+    alert("Clique EMAIL detectado");
 
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
@@ -110,10 +99,10 @@
     }
 
     window.location.href = "plans.html";
-  };
+  }
 
-  document.getElementById("googleBtn").onclick = async () => {
-    alert("Google clicado");
+  async function loginGoogle() {
+    alert("Clique GOOGLE detectado");
 
     await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -121,7 +110,7 @@
         redirectTo: "https://brasilloteca.github.io/mxdollar-seco/plans.html"
       }
     });
-  };
+  }
 </script>
 
 </body>
