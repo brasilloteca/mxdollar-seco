@@ -3,37 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <title>Autenticando...</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.29.0/dist/supabase.min.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <p>Finalizando login...</p>
 
-  <script>
-    const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
-    const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
+<script>
+  const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
+  const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
 
-    const supabase = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  async function finish() {
+    const { error } = await supabase.auth.exchangeCodeForSession(
+      window.location.href
     );
 
-    async function finishLogin() {
-      const { error } = await supabase.auth.exchangeCodeForSession(
-        window.location.href
-      );
-
-      if (error) {
-        console.error(error);
-        document.body.innerText = "Erro ao autenticar.";
-        return;
-      }
-
-      // Login concluído com sessão válida
-      window.location.href = "plans.html";
+    if (error) {
+      document.body.innerText = "Erro ao autenticar.";
+      console.error(error);
+      return;
     }
 
-    finishLogin();
-  </script>
+    window.location.href = "plans.html";
+  }
+
+  finish();
+</script>
 </body>
 </html>
