@@ -32,7 +32,7 @@
     .plans {
       max-width: 1000px;
       margin: 3rem auto;
-      display: none;
+      display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 1.5rem;
       padding: 0 1rem;
@@ -46,6 +46,13 @@
       box-shadow: 0 10px 25px rgba(0,0,0,.08);
     }
 
+    .price {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 1rem 0;
+      color: #4a90e2;
+    }
+
     button {
       padding: .9rem;
       border: none;
@@ -53,6 +60,7 @@
       background: #4a90e2;
       color: #fff;
       cursor: pointer;
+      font-size: 1rem;
     }
   </style>
 </head>
@@ -64,40 +72,80 @@
 
 <div id="loading" class="loading">Finalizando login...</div>
 
-<section id="plans" class="plans">
+<section id="plans" class="plans" style="display:none;">
   <div class="plan">
     <h2>Mensal</h2>
-    <p>R$ 49,90</p>
+    <div class="price">R$ 49,90</div>
     <button data-price="price_1Sb2liIrLyzh0kTrj2sUPVQp">Assinar</button>
+  </div>
+
+  <div class="plan">
+    <h2>Semestral</h2>
+    <div class="price">R$ 239,90</div>
+    <button data-price="price_1Sb2liIrLyzh0kTr2jzoWNjW">Assinar</button>
+  </div>
+
+  <div class="plan">
+    <h2>Anual</h2>
+    <div class="price">R$ 359,90</div>
+    <button data-price="price_1Sb2liIrLyzh0kTrtoYXI7TV">Assinar</button>
   </div>
 </section>
 
 <script>
   const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
+  const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
 
-  const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY,
-    {
-      auth: {
-        persistSession: true,
-        detectSessionInUrl: true
-      }
-    }
-  );
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   async function init() {
     const { data } = await supabase.auth.getSession();
 
     if (!data.session) {
+      // Sem sessão ativa → volta pro login
       window.location.href = "login.html";
       return;
     }
 
+    // Sessão ativa → mostra planos
     document.getElementById("loading").style.display = "none";
     document.getElementById("plans").style.display = "grid";
+
+    const currentUser = data.session.user;
+
+    // Adiciona click para os botões de Stripe
+    document.querySelectorAll("button[data-price]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        btn.innerText = "Redirecionando...";
+
+        const res = await fetch(
+          "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session-",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({
+              priceId: btn.dataset.price,
+              userId: currentUser.id
+            })
+          }
+        );
+
+        const data = await res.json();
+
+        if (data.sessionId) {
+          const stripe = Stripe("SUA_PUBLIC_KEY_STRIPE");
+          stripe.redirectToCheckout({ sessionId: data.sessionId });
+        } else {
+          alert("Erro ao iniciar pagamento");
+          btn.disabled = false;
+          btn.innerText = "Assinar";
+        }
+      });
+    });
   }
 
   init();
