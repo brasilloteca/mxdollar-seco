@@ -2,19 +2,126 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Teste Clique</title>
+  <title>Login • MX$</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Supabase UMD -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f7fb;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .wrapper {
+      max-width: 360px;
+      margin: 40px auto;
+    }
+
+    .box {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      position: relative;
+      z-index: 10;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 0.9rem;
+      margin-top: 0.7rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      pointer-events: auto;
+    }
+
+    button {
+      background: #4a90e2;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    .google {
+      background: #fff;
+      color: #000;
+      border: 1px solid #ccc;
+    }
+
+    hr {
+      margin: 1rem 0;
+    }
+  </style>
 </head>
 <body>
 
-<button id="btn">CLIQUE AQUI</button>
+<div class="wrapper">
+  <div class="box">
+    <h2>Entrar no MX$</h2>
+
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Senha">
+
+    <button id="emailBtn">Entrar / Criar conta</button>
+
+    <hr>
+
+    <button id="googleBtn" class="google">Entrar com Google</button>
+  </div>
+</div>
 
 <script>
   alert("JS carregou");
 
-  document.getElementById("btn").addEventListener("click", () => {
-    alert("BOTÃO FUNCIONA");
-  });
+  const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
+  const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
+
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  document.getElementById("emailBtn").onclick = async () => {
+    alert("Email clicado");
+
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      const { error: signupError } = await supabase.auth.signUp({
+        email,
+        password
+      });
+
+      if (signupError) {
+        alert(signupError.message);
+        return;
+      }
+    }
+
+    window.location.href = "plans.html";
+  };
+
+  document.getElementById("googleBtn").onclick = async () => {
+    alert("Google clicado");
+
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: "https://brasilloteca.github.io/mxdollar-seco/plans.html"
+      }
+    });
+  };
 </script>
 
 </body>
