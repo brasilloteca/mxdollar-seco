@@ -8,6 +8,11 @@
   <!-- Supabase (UMD correto) -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
+  <!-- TESTE CRÍTICO -->
+  <script>
+    alert("JS carregou");
+  </script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -69,6 +74,8 @@
   );
 
   async function loginEmail() {
+    alert("loginEmail disparou");
+
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
@@ -78,7 +85,6 @@
     });
 
     if (error) {
-      // tenta criar conta
       const { error: signupError } = await supabase.auth.signUp({
         email,
         password
@@ -94,6 +100,8 @@
   }
 
   async function loginGoogle() {
+    alert("loginGoogle disparou");
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
