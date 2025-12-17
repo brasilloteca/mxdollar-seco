@@ -1,115 +1,156 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Login • MX$</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Entrar no MX$</title>
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+  body {
+    background:#f4f5f7;
+    font-family: Inter, Arial, sans-serif;
+    margin:0;
+    padding:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+  }
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f6f7fb;
-      margin: 0;
-      padding: 30px;
-    }
+  #login-box {
+    width: 100%;
+    max-width:380px;
+    background:#fff;
+    padding:2rem;
+    border-radius:14px;
+    box-shadow:0 0 12px rgba(0,0,0,0.15);
+    text-align:center;
+  }
 
-    .box {
-      max-width: 360px;
-      margin: 60px auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
+  h2 { margin-bottom:1.2rem; }
 
-    input, button {
-      width: 100%;
-      padding: 14px;
-      margin-top: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
+  input {
+    width:100%;
+    padding:0.8rem;
+    margin-top:0.7rem;
+    border:1px solid #ccc;
+    border-radius:8px;
+    font-size:1rem;
+  }
 
-    button {
-      background: #4a90e2;
-      color: #fff;
-      border: none;
-    }
+  button {
+    width:100%;
+    padding:0.9rem;
+    margin-top:1rem;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:1rem;
+    font-weight:600;
+    color:#fff;
+  }
 
-    .google {
-      background: #fff;
-      color: #000;
-      border: 1px solid #ccc;
-    }
-  </style>
+  #btnEmailLogin { background:#007bff; }
+  #btnRegistrar { background:#28a745; }
+  #btnGoogle { background:#db4437; display:flex; justify-content:center; align-items:center; gap:.5rem; }
+
+  #google-icon {
+    width:20px;
+    height:20px;
+  }
+
+  #status {
+    margin-top:1rem;
+    font-size:.9rem;
+    color:#444;
+  }
+</style>
 </head>
 <body>
 
-<div class="box">
+<div id="login-box">
   <h2>Entrar no MX$</h2>
 
-  <input id="email" type="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Senha">
+  <input type="email" id="email" placeholder="Seu email" autocomplete="email" />
+  <input type="password" id="senha" placeholder="Sua senha" autocomplete="current-password" />
 
-  <!-- EVENTO INLINE -->
-  <button onclick="loginEmail()">Entrar / Criar conta</button>
+  <button id="btnEmailLogin">Entrar com Email</button>
+  <button id="btnRegistrar">Criar Conta</button>
 
-  <hr>
+  <button id="btnGoogle">
+    <img id="google-icon" src="https://developers.google.com/identity/images/g-logo.png" />
+    Entrar com Google
+  </button>
 
-  <!-- EVENTO INLINE -->
-  <button class="google" onclick="loginGoogle()">Entrar com Google</button>
+  <div id="status"></div>
 </div>
 
-<script>
-  alert("JS carregou");
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
-
-  const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
+  // 🔥 SUA URL + PUBLIC ANON KEY
+  const supabase = createClient(
+    "https://ogosbyjhxjatukdhkiqw.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM5NzM5OTEsImV4cCI6MjA0OTU0OTk5MX0.s7eDt2S8KMdVbVj25Z4k6iRvK9ljHa9BIwLXal29GHI"
   );
 
-  async function loginEmail() {
-    alert("Clique EMAIL detectado");
+  const statusBox = document.getElementById("status");
 
+  function msg(txt) {
+    statusBox.innerText = txt;
+  }
+
+  // 🔵 LOGIN EMAIL/SENHA
+  document.getElementById("btnEmailLogin").onclick = async () => {
     const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+    const senha = document.getElementById("senha").value;
+
+    if (!email || !senha) return msg("Preencha email e senha.");
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password: senha
     });
 
-    if (error) {
-      const { error: signupError } = await supabase.auth.signUp({
-        email,
-        password
-      });
+    if (error) return msg("Erro: " + error.message);
 
-      if (signupError) {
-        alert(signupError.message);
-        return;
-      }
-    }
+    msg("Entrando...");
+    window.location.href = "app.html";
+  };
 
-    window.location.href = "plans.html";
-  }
+  // 🟢 CRIAR CONTA
+  document.getElementById("btnRegistrar").onclick = async () => {
+    const email = document.getElementById("email").value;
+    const senha = document.getElementById("senha").value;
 
-  async function loginGoogle() {
-    alert("Clique GOOGLE detectado");
+    if (!email || !senha) return msg("Preencha email e senha.");
 
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signUp({
+      email,
+      password: senha
+    });
+
+    if (error) return msg("Erro ao criar conta: " + error.message);
+
+    msg("Conta criada! Verifique seu email e depois faça login.");
+  };
+
+  // 🔴 LOGIN COM GOOGLE
+  document.getElementById("btnGoogle").onclick = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://brasilloteca.github.io/mxdollar-seco/plans.html"
+        redirectTo: "https://brasilloteca.github.io/mxdollar-seco/app.html"
       }
     });
+
+    if (error) msg("Erro Google: " + error.message);
+  };
+
+  // 🔒 Se já estiver logado → envia pro app
+  const { data: sess } = await supabase.auth.getSession();
+  if (sess.session) {
+    window.location.href = "app.html";
   }
 </script>
 
