@@ -5,13 +5,8 @@
   <title>Login • MX$</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Supabase (UMD correto) -->
+  <!-- Supabase UMD -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
-  <!-- TESTE CRÍTICO -->
-  <script>
-    alert("JS carregou");
-  </script>
 
   <style>
     body {
@@ -57,14 +52,16 @@
   <input id="email" type="email" placeholder="Email" />
   <input id="password" type="password" placeholder="Senha" />
 
-  <button onclick="loginEmail()">Entrar / Criar conta</button>
+  <button id="btnEmail">Entrar / Criar conta</button>
 
   <hr />
 
-  <button class="google" onclick="loginGoogle()">Entrar com Google</button>
+  <button class="google" id="btnGoogle">Entrar com Google</button>
 </div>
 
 <script>
+  alert("JS carregou");
+
   const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
   const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
 
@@ -73,8 +70,8 @@
     SUPABASE_ANON_KEY
   );
 
-  async function loginEmail() {
-    alert("loginEmail disparou");
+  document.getElementById("btnEmail").addEventListener("click", async () => {
+    alert("Email clicado");
 
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
@@ -97,10 +94,10 @@
     }
 
     window.location.href = "plans.html";
-  }
+  });
 
-  async function loginGoogle() {
-    alert("loginGoogle disparou");
+  document.getElementById("btnGoogle").addEventListener("click", async () => {
+    alert("Google clicado");
 
     await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -108,7 +105,7 @@
         redirectTo: "https://brasilloteca.github.io/mxdollar-seco/auth-callback.html"
       }
     });
-  }
+  });
 </script>
 
 </body>
