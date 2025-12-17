@@ -2,61 +2,45 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Login MX$</title>
+  <title>Login • MX$</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.29.0/dist/supabase.min.js"></script>
+  <!-- Supabase (UMD correto) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
     body {
-      font-family: Inter, Arial, sans-serif;
+      font-family: Arial, sans-serif;
       background: #f6f7fb;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
     }
-
     .box {
       background: #fff;
       padding: 2rem;
       border-radius: 12px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.1);
-      text-align: center;
+      width: 320px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     }
-
-    input {
+    input, button {
       width: 100%;
-      padding: .8rem;
-      margin-bottom: .8rem;
+      padding: 0.8rem;
+      margin-top: 0.6rem;
       border-radius: 8px;
       border: 1px solid #ccc;
-      font-size: 1rem;
     }
-
     button {
-      width: 100%;
-      padding: .9rem;
-      border: none;
-      border-radius: 8px;
       background: #4a90e2;
       color: #fff;
-      font-size: 1rem;
+      border: none;
       cursor: pointer;
-      margin-bottom: .6rem;
     }
-
     .google {
-      background: #000;
-    }
-
-    .msg {
-      margin-top: 1rem;
-      font-size: .9rem;
-      color: #c00;
+      background: #fff;
+      color: #000;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
@@ -68,27 +52,20 @@
   <input id="email" type="email" placeholder="Email" />
   <input id="password" type="password" placeholder="Senha" />
 
-  <button onclick="loginEmail()">Entrar com email</button>
-  <button class="google" onclick="loginGoogle()">Entrar com Google</button>
+  <button onclick="loginEmail()">Entrar / Criar conta</button>
 
-  <div id="msg" class="msg"></div>
+  <hr />
+
+  <button class="google" onclick="loginGoogle()">Entrar com Google</button>
 </div>
 
 <script>
   const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
+  const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
 
   const supabase = window.supabase.createClient(
     SUPABASE_URL,
-    SUPABASE_ANON_KEY,
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    }
+    SUPABASE_ANON_KEY
   );
 
   async function loginEmail() {
@@ -101,8 +78,16 @@
     });
 
     if (error) {
-      document.getElementById("msg").innerText = error.message;
-      return;
+      // tenta criar conta
+      const { error: signupError } = await supabase.auth.signUp({
+        email,
+        password
+      });
+
+      if (signupError) {
+        alert(signupError.message);
+        return;
+      }
     }
 
     window.location.href = "plans.html";
@@ -112,8 +97,7 @@
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo:
-          "https://brasilloteca.github.io/mxdollar-seco/plans.html"
+        redirectTo: "https://brasilloteca.github.io/mxdollar-seco/auth-callback.html"
       }
     });
   }
