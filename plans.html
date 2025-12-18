@@ -93,10 +93,11 @@
 </section>
 
 <script>
-  const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
-  const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
-
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // Inicializa Supabase usando a sessão já ativa
+  const supabase = window.supabase.createClient(
+    "https://ogosbyjhxjatukdhkiqw.supabase.co",
+    "" // Chave anon não precisa aqui
+  );
 
   async function init() {
     const { data } = await supabase.auth.getSession();
@@ -107,25 +108,24 @@
       return;
     }
 
-    // Sessão ativa → mostra planos
     document.getElementById("loading").style.display = "none";
     document.getElementById("plans").style.display = "grid";
 
     const currentUser = data.session.user;
 
-    // Adiciona click para os botões de Stripe
     document.querySelectorAll("button[data-price]").forEach(btn => {
       btn.addEventListener("click", async () => {
         btn.disabled = true;
         btn.innerText = "Redirecionando...";
 
+        // Chamando função Supabase no backend que usa a ANON_KEY segura
         const res = await fetch(
-          "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session-",
+          `https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session-`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+              "Authorization": `Bearer ${data.session.access_token}`
             },
             body: JSON.stringify({
               priceId: btn.dataset.price,
@@ -134,11 +134,11 @@
           }
         );
 
-        const data = await res.json();
+        const checkout = await res.json();
 
-        if (data.sessionId) {
+        if (checkout.sessionId) {
           const stripe = Stripe("SUA_PUBLIC_KEY_STRIPE");
-          stripe.redirectToCheckout({ sessionId: data.sessionId });
+          stripe.redirectToCheckout({ sessionId: checkout.sessionId });
         } else {
           alert("Erro ao iniciar pagamento");
           btn.disabled = false;
