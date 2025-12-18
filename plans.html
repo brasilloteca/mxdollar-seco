@@ -1,11 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <title>Planos MX$</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://js.stripe.com/v3/"></script>
 
   <style>
@@ -64,6 +63,7 @@
     }
   </style>
 </head>
+
 <body>
 
 <header>
@@ -92,66 +92,60 @@
   </div>
 </section>
 
-<script>
-  const supabase = supabaseJs.createClient(
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+  const supabase = createClient(
     "https://ogosbyjhxjatukdhkiqw.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM5NzM5OTEsImV4cCI6MjA0OTU0OTk5MX0.s7eDt2S8KMdVbVj25Z4k6iRvK9ljHa9BIwLXal29GHI",
-    {
-      auth: {
-        persistSession: true,
-        detectSessionInUrl: true
-      }
-    }
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM5NzM5OTEsImV4cCI6MjA0OTU0OTk5MX0.s7eDt2S8KMdVbVj25Z4k6iRvK9ljHa9BIwLXal29GHI"
   );
 
-  async function init() {
-    const { data } = await supabase.auth.getSession();
+  const loading = document.getElementById("loading");
+  const plans = document.getElementById("plans");
 
-    if (!data.session) {
-      window.location.href = "login.html";
-      return;
-    }
+  const { data } = await supabase.auth.getSession();
 
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("plans").style.display = "grid";
-
-    const user = data.session.user;
-
-    document.querySelectorAll("button[data-price]").forEach(btn => {
-      btn.onclick = async () => {
-        btn.disabled = true;
-        btn.innerText = "Redirecionando...";
-
-        const res = await fetch(
-          "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${data.session.access_token}`
-            },
-            body: JSON.stringify({
-              priceId: btn.dataset.price,
-              userId: user.id
-            })
-          }
-        );
-
-        const dataCheckout = await res.json();
-
-        if (dataCheckout.sessionId) {
-          const stripe = Stripe("SUA_PUBLIC_KEY_STRIPE");
-          stripe.redirectToCheckout({ sessionId: dataCheckout.sessionId });
-        } else {
-          alert("Erro ao iniciar pagamento");
-          btn.disabled = false;
-          btn.innerText = "Assinar";
-        }
-      };
-    });
+  if (!data.session) {
+    window.location.href = "login.html";
+  } else {
+    loading.style.display = "none";
+    plans.style.display = "grid";
   }
 
-  init();
+  const user = data.session.user;
+
+  document.querySelectorAll("button[data-price]").forEach(btn => {
+    btn.onclick = async () => {
+      btn.disabled = true;
+      btn.innerText = "Redirecionando...";
+
+      const res = await fetch(
+        "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${data.session.access_token}`
+          },
+          body: JSON.stringify({
+            priceId: btn.dataset.price,
+            userId: user.id
+          })
+        }
+      );
+
+      const checkout = await res.json();
+
+      if (checkout.sessionId) {
+        const stripe = Stripe("SUA_PUBLIC_KEY_STRIPE");
+        stripe.redirectToCheckout({ sessionId: checkout.sessionId });
+      } else {
+        alert("Erro ao iniciar pagamento");
+        btn.disabled = false;
+        btn.innerText = "Assinar";
+      }
+    };
+  });
 </script>
 
 </body>
