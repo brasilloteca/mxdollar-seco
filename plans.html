@@ -95,10 +95,12 @@
 <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  const supabase = createClient(
-    "https://ogosbyjhxjatukdhkiqw.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc"
-  );
+  const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
+
+  const STRIPE_PUBLIC_KEY = "pk_test_51SX5qDIrLyzh0kTrlUoIADRWlzgMIYQh827VH5rUG0r4B32nN56SfmP2Wn7kBS9ltkeF8b7romn3leJH0Dc04rOk00PZY5X4hZ";
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const loading = document.getElementById("loading");
   const plans = document.getElementById("plans");
@@ -107,42 +109,49 @@
 
   if (!data.session) {
     window.location.href = "login.html";
-  } else {
-    loading.style.display = "none";
-    plans.style.display = "grid";
+    throw new Error("Sem sessão");
   }
 
+  loading.style.display = "none";
+  plans.style.display = "grid";
+
   const user = data.session.user;
+  const stripe = Stripe(STRIPE_PUBLIC_KEY);
 
   document.querySelectorAll("button[data-price]").forEach(btn => {
     btn.onclick = async () => {
       btn.disabled = true;
       btn.innerText = "Redirecionando...";
 
-      const res = await fetch(
-        "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${data.session.access_token}`
-          },
-          body: JSON.stringify({
-            priceId: btn.dataset.price,
-            userId: user.id
-          })
+      try {
+        const res = await fetch(
+          "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              // 🔴 CORREÇÃO CRÍTICA AQUI
+              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({
+              priceId: btn.dataset.price,
+              userId: user.id
+            })
+          }
+        );
+
+        const checkout = await res.json();
+
+        if (checkout.sessionId) {
+          await stripe.redirectToCheckout({ sessionId: checkout.sessionId });
+        } else {
+          throw new Error("sessionId não retornado");
         }
-      );
-
-      const checkout = await res.json();
-
-      if (checkout.sessionId) {
-        const stripe = Stripe("SUA_PUBLIC_KEY_STRIPE");
-        stripe.redirectToCheckout({ sessionId: checkout.sessionId });
-      } else {
+      } catch (err) {
         alert("Erro ao iniciar pagamento");
         btn.disabled = false;
         btn.innerText = "Assinar";
+        console.error(err);
       }
     };
   });
