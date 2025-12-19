@@ -125,20 +125,18 @@
 
       try {
         const res = await fetch(
-          "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session-",
-          {
-            method: "POST",
-            headers: {
-  "Content-Type": "application/json",
-  "apikey": SUPABASE_ANON_KEY,
-  "Authorization": `Bearer ${data.session.access_token}`
-},
-            body: JSON.stringify({
-              priceId: btn.dataset.price,
-              userId: user.id
-            })
-          }
-        );
+  "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({
+      priceId: btn.dataset.price,
+    }),
+  }
+);
 
         const checkout = await res.json();
 
