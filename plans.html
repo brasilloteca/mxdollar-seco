@@ -129,10 +129,10 @@
           {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
-              // 🔴 CORREÇÃO CRÍTICA AQUI
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-            },
+  "Content-Type": "application/json",
+  "apikey": SUPABASE_ANON_KEY,
+  "Authorization": `Bearer ${data.session.access_token}`
+},
             body: JSON.stringify({
               priceId: btn.dataset.price,
               userId: user.id
