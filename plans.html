@@ -1,9 +1,9 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <title>Planos MX$</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <script src="https://js.stripe.com/v3/"></script>
 
@@ -63,7 +63,6 @@
     }
   </style>
 </head>
-
 <body>
 
 <header>
@@ -95,64 +94,69 @@
 <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nb3NieWpoeGphdHVrZGhraXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzIzMDUsImV4cCI6MjA4MDYwODMwNX0.-KbpngKGuRluFRdNcdKP14X13yUJIOzLaqjDyWAYHVc";
-
-  const STRIPE_PUBLIC_KEY = "pk_test_51SX5qDIrLyzh0kTrlUoIADRWlzgMIYQh827VH5rUG0r4B32nN56SfmP2Wn7kBS9ltkeF8b7romn3leJH0Dc04rOk00PZY5X4hZ";
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = createClient(
+    "https://ogosbyjhxjatukdhkiqw.supabase.co",
+    "SUA_ANON_KEY_AQUI"
+  );
 
   const loading = document.getElementById("loading");
   const plans = document.getElementById("plans");
 
-  const { data } = await supabase.auth.getSession();
+  async function init() {
+    // Pega sessão atual
+    const { data: sessionData } = await supabase.auth.getSession();
 
-  if (!data.session) {
-    window.location.href = "login.html";
-    throw new Error("Sem sessão");
-  }
+    if (!sessionData.session) {
+      window.location.href = "login.html";
+      return;
+    }
 
-  loading.style.display = "none";
-  plans.style.display = "grid";
+    // Esconde loading e mostra planos
+    loading.style.display = "none";
+    plans.style.display = "grid";
 
-  const user = data.session.user;
-  const stripe = Stripe(STRIPE_PUBLIC_KEY);
+    const stripe = Stripe("pk_test_51SX5qDIrLyzh0kTrlUoIADRWlzgMIYQh827VH5rUG0r4B32nN56SfmP2Wn7kBS9ltkeF8b7romn3leJH0Dc04rOk00PZY5X4hZ");
 
-  document.querySelectorAll("button[data-price]").forEach(btn => {
-    btn.onclick = async () => {
-      btn.disabled = true;
-      btn.innerText = "Redirecionando...";
+    document.querySelectorAll("button[data-price]").forEach(btn => {
+      btn.onclick = async () => {
+        btn.disabled = true;
+        btn.innerText = "Redirecionando...";
 
-      try {
-        const res = await fetch(
-  "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({
-      priceId: btn.dataset.price,
-    }),
-  }
-);
+        try {
+          const res = await fetch(
+            "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${sessionData.session.access_token}`
+              },
+              body: JSON.stringify({
+                priceId: btn.dataset.price
+              })
+            }
+          );
 
-        const checkout = await res.json();
+          const checkout = await res.json();
 
-        if (checkout.sessionId) {
-          await stripe.redirectToCheckout({ sessionId: checkout.sessionId });
-        } else {
-          throw new Error("sessionId não retornado");
+          if (checkout.sessionId) {
+            await stripe.redirectToCheckout({ sessionId: checkout.sessionId });
+          } else {
+            alert("Erro ao iniciar pagamento");
+            btn.disabled = false;
+            btn.innerText = "Assinar";
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Erro ao iniciar pagamento");
+          btn.disabled = false;
+          btn.innerText = "Assinar";
         }
-      } catch (err) {
-        alert("Erro ao iniciar pagamento");
-        btn.disabled = false;
-        btn.innerText = "Assinar";
-        console.error(err);
-      }
-    };
-  });
+      };
+    });
+  }
+
+  init();
 </script>
 
 </body>
