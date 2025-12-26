@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Gestão de Banca</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; padding:20px; }
+.card { background:#fff; padding:20px; border-radius:10px; max-width:900px; margin:auto; box-shadow:0 0 10px rgba(0,0,0,.1);}
+h1 { text-align:center; }
+input, button { padding:8px; margin:4px 0; width:100%; }
+button { cursor:pointer; }
+.green { background:#d4edda; }
+.red { background:#f8d7da; }
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+th, td { border:1px solid #ccc; padding:6px; text-align:center; }
+.status-safe { color:green; font-weight:bold; }
+.status-warning { color:orange; font-weight:bold; }
+.status-danger { color:red; font-weight:bold; }
+</style>
+</head>
+<body>
+<div class="card">
+<h1>Gestão de Banca</h1>
+
+<label>Equipe 1</label><input id="team1">
+<label>Equipe 2</label><input id="team2">
+
+<label>Valor da Aposta</label><input id="betValue" type="number">
+<label>Odd</label><input id="odd" type="number" step="0.01">
+<label>Banca Inicial</label><input id="initialBank" type="number">
+
+<label>Máx. REDs consecutivos</label><input id="maxReds" type="number" value="3">
+
+<p>Saldo Atual: R$ <span id="currentBank">0</span></p>
+<p>Próxima Aposta Sugerida: R$ <span id="nextBet">0</span></p>
+<p>Status: <span id="status" class="status-safe">Banca segura</span></p>
+
+<button onclick="executeBet()">Executar Aposta</button>
+<button onclick="markResult('GREEN')">Marcar GREEN</button>
+<button onclick="markResult('RED')">Marcar RED</button>
+<button onclick="resetLast()">Resetar Última Aposta</button>
+<button onclick="resetAll()">Resetar Histórico Total</button>
+
+<table>
+<thead>
+<tr><th>Jogo</th><th>Aposta</th><th>Odd</th><th>Resultado</th><th>Saldo</th></tr>
+</thead>
+<tbody id="history"></tbody>
+</table>
+</div>
+
+<script>
+let state = JSON.parse(localStorage.getItem('bankState')) || {
+  bank:0, initial:0, reds:0, protection:false, lastWinBet:0, history:[]
+};
+
+function save(){ localStorage.setItem('bankState', JSON.stringify(state)); render(); }
+
+function render(){
+  document.getElementById('currentBank').innerText = state.bank.toFixed(2);
+  document.getElementById('nextBet').innerText = (state.protection && state.lastWinBet ? (state.lastWinBet*1.1) : (document.getElementById('betValue').value||0)).toFixed(2);
+  document.getElementById('status').innerText = state.protection ? 'Proteção ativa' : 'Banca segura';
+  document.getElementById('status').className = state.protection ? 'status-warning' : 'status-safe';
+  let h = document.getElementById('history'); h.innerHTML='';
+  state.history.forEach(r=>{
+    let tr=document.createElement('tr');
+    tr.className = r.result==='GREEN'?'green':'red';
+    tr.innerHTML=`<td>${r.game}</td><td>${r.bet}</td><td>${r.odd}</td><td>${r.result}</td><td>${r.bank}</td>`;
+    h.appendChild(tr);
+  });
+}
+
+function executeBet(){
+  let bet = parseFloat(betValue.value);
+  let oddv = parseFloat(odd.value);
+  if(!state.initial){ state.initial = parseFloat(initialBank.value); state.bank = state.initial; }
+  state.pending = { game: team1.value+' x '+team2.value, bet, odd:oddv };
+  alert('Aposta registrada. Marque o resultado.');
+}
+
+function markResult(res){
+  if(!state.pending) return alert('Nenhuma aposta pendente.');
+  let {bet, odd, game} = state.pending;
+  if(res==='GREEN'){
+    state.bank += bet*(odd-1);
+    state.reds=0;
+    state.protection=false;
+    state.lastWinBet=bet;
+  } else {
+    state.bank -= bet;
+    state.reds++;
+    if(state.reds>=parseInt(maxReds.value)) state.protection=true;
+  }
+  state.history.unshift({game, bet, odd, result:res, bank:state.bank.toFixed(2)});
+  state.pending=null;
+  save();
+}
+
+function resetLast(){
+  state.history.shift();
+  save();
+}
+
+function resetAll(){
+  if(confirm('Tem certeza?')){ localStorage.removeItem('bankState'); location.reload(); }
+}
+
+render();
+</script>
+</body>
+</html>
