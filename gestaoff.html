@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle de Apostas</title>
+<title>Gestão de Banca</title>
 <style>
-body { font-family: Arial, sans-serif; padding: 10px; background:#f2f2f2; }
-.container { max-width: 420px; margin:auto; background:white; padding:10px; border-radius:8px; }
+body { font-family: Arial, sans-serif; padding:10px; background:#f2f2f2; }
+.container { max-width:420px; margin:auto; background:#fff; padding:10px; border-radius:8px; }
 h2 { text-align:center; margin:5px 0; }
 label { font-size:12px; font-weight:bold; }
 input, button {
@@ -20,6 +20,7 @@ input, button {
 button { background:#222; color:white; border:none; }
 button.green { background:#1a8f3a; }
 button.red { background:#b52b27; }
+button.warn { background:#c77c02; }
 .small { font-size:11px; }
 table { width:100%; font-size:11px; border-collapse: collapse; margin-top:6px;}
 td, th { border:1px solid #ccc; padding:4px; text-align:center; }
@@ -29,16 +30,19 @@ td, th { border:1px solid #ccc; padding:4px; text-align:center; }
 </head>
 <body>
 <div class="container">
-<h2>Controle de Apostas</h2>
+<h2>Gestão de Banca</h2>
 
 <label>Banca atual</label>
-<input type="number" id="bank" value="100">
+<input type="number" id="bank">
 
-<label>Valor da aposta</label>
+<label>Valor da próxima aposta</label>
 <input type="number" id="bet">
 
 <label>Odd</label>
 <input type="number" step="0.01" id="odd" value="2.00">
+
+<label>Máx. REDs consecutivos</label>
+<input type="number" id="maxReds" value="3">
 
 <button onclick="criarAposta()">Criar aposta</button>
 
@@ -47,88 +51,93 @@ td, th { border:1px solid #ccc; padding:4px; text-align:center; }
 <button class="green" onclick="resultado('GREEN')">GREEN</button>
 <button class="red" onclick="resultado('RED')">RED</button>
 
+<button class="warn" onclick="apagarUltima()">↩ Apagar última aposta</button>
+<button class="warn" onclick="resetar()">🗑 Resetar histórico</button>
+
 <h3>Histórico</h3>
 <table>
 <thead>
-<tr><th>Jogo</th><th>Aposta</th><th>Odd</th><th>Res</th><th>Banca</th></tr>
+<tr><th>#</th><th>Aposta</th><th>Odd</th><th>Res</th><th>Banca</th></tr>
 </thead>
 <tbody id="historico"></tbody>
 </table>
 </div>
 
 <script>
-let estado = JSON.parse(localStorage.getItem('apostaEstado')) || {
+let estado = JSON.parse(localStorage.getItem('gestaoEstado')) || {
   bank: 100,
+  baseBet: null,
   pendente: null,
-  historico: []
+  historico: [],
+  reds: 0,
+  maxReds: 3
 };
 
 const bankInput = document.getElementById('bank');
 const betInput = document.getElementById('bet');
 const oddInput = document.getElementById('odd');
+const maxRedsInput = document.getElementById('maxReds');
 const pendenteDiv = document.getElementById('pendente');
 const historicoBody = document.getElementById('historico');
 
 function salvar() {
-  localStorage.setItem('apostaEstado', JSON.stringify(estado));
+  localStorage.setItem('gestaoEstado', JSON.stringify(estado));
   render();
 }
 
 function render() {
   bankInput.value = estado.bank.toFixed(2);
-  pendenteDiv.innerHTML = estado.pendente 
-    ? `Aposta pendente: ${estado.pendente.valor} @ ${estado.pendente.odd}` 
+  betInput.value = calcularProxima().toFixed(2);
+  maxRedsInput.value = estado.maxReds;
+
+  pendenteDiv.innerHTML = estado.pendente
+    ? `Aposta pendente: ${estado.pendente.valor.toFixed(2)} @ ${estado.pendente.odd}`
     : "Nenhuma aposta pendente.";
-  
+
   historicoBody.innerHTML = "";
-  estado.historico.forEach(h => {
+  estado.historico.forEach((h, i) => {
     const tr = document.createElement("tr");
     tr.className = h.res === 'GREEN' ? 'greenRow' : 'redRow';
-    tr.innerHTML = `<td>${h.jogo}</td><td>${h.valor}</td><td>${h.odd}</td><td>${h.res}</td><td>${h.bank}</td>`;
+    tr.innerHTML = `<td>${estado.historico.length - i}</td><td>${h.valor}</td><td>${h.odd}</td><td>${h.res}</td><td>${h.bank}</td>`;
     historicoBody.appendChild(tr);
   });
 }
 
+function calcularProxima() {
+  if (!estado.baseBet) return 10;
+  if (estado.reds === 0) return estado.baseBet;
+  return Math.min(estado.baseBet * (estado.reds + 1), estado.bank);
+}
+
 function criarAposta() {
-  if (estado.pendente) {
-    alert("Finalize a aposta atual primeiro.");
-    return;
-  }
+  if (estado.pendente) return alert("Finalize a aposta atual.");
+
+  estado.maxReds = parseInt(maxRedsInput.value);
 
   const valor = parseFloat(betInput.value);
   const odd = parseFloat(oddInput.value);
 
-  if (isNaN(valor) || isNaN(odd) || valor <= 0 || odd <= 1) {
-    alert("Preencha valor e odd corretamente.");
-    return;
-  }
+  if (!estado.baseBet) estado.baseBet = valor;
 
-  estado.pendente = {
-    jogo: "Aposta " + (estado.historico.length + 1),
-    valor,
-    odd
-  };
-
+  estado.pendente = { valor, odd };
   salvar();
 }
 
 function resultado(res) {
-  if (!estado.pendente) {
-    alert("Não há aposta pendente.");
-    return;
-  }
+  if (!estado.pendente) return alert("Não há aposta.");
 
   const { valor, odd } = estado.pendente;
 
   if (res === "GREEN") {
     estado.bank += valor * (odd - 1);
+    estado.reds = 0;
   } else {
     estado.bank -= valor;
+    estado.reds++;
   }
 
   estado.historico.unshift({
-    jogo: estado.pendente.jogo,
-    valor,
+    valor: valor.toFixed(2),
     odd,
     res,
     bank: estado.bank.toFixed(2)
@@ -136,6 +145,26 @@ function resultado(res) {
 
   estado.pendente = null;
   salvar();
+}
+
+function apagarUltima() {
+  if (!estado.historico.length) return;
+
+  const ultima = estado.historico.shift();
+
+  if (ultima.res === "GREEN") {
+    estado.bank -= parseFloat(ultima.valor) * (ultima.odd - 1);
+  } else {
+    estado.bank += parseFloat(ultima.valor);
+  }
+
+  salvar();
+}
+
+function resetar() {
+  if (!confirm("Resetar tudo?")) return;
+  localStorage.removeItem('gestaoEstado');
+  location.reload();
 }
 
 render();
