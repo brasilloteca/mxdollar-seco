@@ -1,42 +1,144 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Gestão de Banca</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Apostas</title>
 <style>
-body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; padding:10px; }
-.card { background:#fff; padding:12px; border-radius:10px; max-width:900px; margin:auto; box-shadow:0 0 10px rgba(0,0,0,.1);} 
-input, button { padding:2px 4px; margin:2px 0; width:100%; font-size:11px; box-sizing:border-box; }
-@media (max-width:600px){ input,button{font-size:10px;padding:2px;} } }
-.green { background:#d4edda; }
-.red { background:#f8d7da; }
+body { font-family: Arial, sans-serif; padding: 10px; background:#f2f2f2; }
+.container { max-width: 420px; margin:auto; background:white; padding:10px; border-radius:8px; }
+h2 { text-align:center; margin:5px 0; }
+label { font-size:12px; font-weight:bold; }
+input, button {
+  width:100%;
+  padding:6px;
+  font-size:12px;
+  margin:4px 0;
+  border-radius:5px;
+  border:1px solid #ccc;
+}
+button { background:#222; color:white; border:none; }
+button.green { background:#1a8f3a; }
+button.red { background:#b52b27; }
+.small { font-size:11px; }
+table { width:100%; font-size:11px; border-collapse: collapse; margin-top:6px;}
+td, th { border:1px solid #ccc; padding:4px; text-align:center; }
+.greenRow { background:#d9f5df; }
+.redRow { background:#f8d7da; }
 </style>
 </head>
 <body>
-<div class="card">
-<h1>Gestão de Banca</h1>
-<label>Equipe 1</label><input id="team1">
-<label>Equipe 2</label><input id="team2">
-<label>Valor da Aposta</label><input id="betValue" type="number">
-<label>Odd</label><input id="odd" type="number" step="0.01">
-<label>Banca Inicial</label><input id="initialBank" type="number">
-<label>Máx. REDs</label><input id="maxReds" type="number" value="3">
-<p>Saldo Atual: R$ <span id="currentBank">0</span></p>
-<p>Próxima Aposta: R$ <span id="nextBet">0</span></p>
-<button onclick="executeBet()">Executar</button>
-<button onclick="markResult('GREEN')">GREEN</button>
-<button onclick="markResult('RED')">RED</button>
-<table><tbody id="history"></tbody></table>
+<div class="container">
+<h2>Controle de Apostas</h2>
+
+<label>Banca atual</label>
+<input type="number" id="bank" value="100">
+
+<label>Valor da aposta</label>
+<input type="number" id="bet">
+
+<label>Odd</label>
+<input type="number" step="0.01" id="odd" value="2.00">
+
+<button onclick="criarAposta()">Criar aposta</button>
+
+<div id="pendente" class="small"></div>
+
+<button class="green" onclick="resultado('GREEN')">GREEN</button>
+<button class="red" onclick="resultado('RED')">RED</button>
+
+<h3>Histórico</h3>
+<table>
+<thead>
+<tr><th>Jogo</th><th>Aposta</th><th>Odd</th><th>Res</th><th>Banca</th></tr>
+</thead>
+<tbody id="historico"></tbody>
+</table>
 </div>
+
 <script>
-let state = JSON.parse(localStorage.getItem('bankState')) || { bank:0, initial:0, reds:0, protection:false, lastWinBet:0, history:[] };
-function save(){ localStorage.setItem('betAppState', JSON.stringify(state)); render(); }(){ localStorage.setItem('bankState', JSON.stringify(state)); render(); }
-function render(){ currentBank.innerText=state.bank.toFixed(2); nextBet.innerText=(state.lastWinBet*1.1||0).toFixed(2); history.innerHTML=''; state.history.forEach(r=>{ let tr=document.createElement('tr'); tr.className=r.result==='GREEN'?'green':'red'; tr.innerHTML=`<td>${r.game}</td><td>${r.bet}</td><td>${r.result}</td><td>${r.bank}</td>`; history.appendChild(tr); }); }
-function executeBet(){ let bet=parseFloat(betValue.value); if(!state.initial){ state.initial=parseFloat(initialBank.value); state.bank=state.initial; } state.pending={ game:team1.value+' x '+team2.value, bet, odd:parseFloat(odd.value)}; }
-function markResult(res){ if(!state.pending){ alert('Nenhuma aposta pendente.'); return;} let {bet,odd,game}=state.pending; if(res==='GREEN'){ state.bank += bet*(odd-1); state.reds=0; state.lastWinBet=bet; betValue.value=(bet*1.1).toFixed(2);} else { state.bank -= bet; state.reds++; }
- state.history.unshift({game,bet,odd,result:res,bank:state.bank.toFixed(2)}); state.pending=null; save(); }(res){ if(!state.pending) return alert('Nenhuma aposta pendente.'); let {bet,odd,game}=state.pending; if(res==='GREEN'){ state.bank+=bet*(odd-1); state.reds=0; state.lastWinBet=bet; betValue.value=(bet*1.1).toFixed(2);} else { state.bank-=bet; state.reds++; }
- state.history.unshift({game,bet,odd,result:res,bank:state.bank.toFixed(2)}); state.pending=null; save(); }
-function render(){ currentBank.innerText=state.bank.toFixed(2); nextBet.innerText=(state.lastWinBet*1.1||0).toFixed(2); history.innerHTML=''; state.history.forEach(r=>{ let tr=document.createElement('tr'); tr.className=r.result==='GREEN'?'green':'red'; tr.innerHTML=`<td>${r.game}</td><td>${r.bet}</td><td>${r.result}</td><td>${r.bank}</td>`; history.appendChild(tr); }); }(res){ if(!state.pending) return; let {bet,odd,game}=state.pending; if(res==='GREEN'){ state.bank+=bet*(odd-1); state.reds=0; state.lastWinBet=bet; betValue.value=(bet*1.1).toFixed(2);} else { state.bank-=bet; state.reds++; }
- state.history.unshift({game,bet,odd,result:res,bank:state.bank.toFixed(2)}); state.pending=null; save(); }
+let estado = JSON.parse(localStorage.getItem('apostaEstado')) || {
+  bank: 100,
+  pendente: null,
+  historico: []
+};
+
+const bankInput = document.getElementById('bank');
+const betInput = document.getElementById('bet');
+const oddInput = document.getElementById('odd');
+const pendenteDiv = document.getElementById('pendente');
+const historicoBody = document.getElementById('historico');
+
+function salvar() {
+  localStorage.setItem('apostaEstado', JSON.stringify(estado));
+  render();
+}
+
+function render() {
+  bankInput.value = estado.bank.toFixed(2);
+  pendenteDiv.innerHTML = estado.pendente 
+    ? `Aposta pendente: ${estado.pendente.valor} @ ${estado.pendente.odd}` 
+    : "Nenhuma aposta pendente.";
+  
+  historicoBody.innerHTML = "";
+  estado.historico.forEach(h => {
+    const tr = document.createElement("tr");
+    tr.className = h.res === 'GREEN' ? 'greenRow' : 'redRow';
+    tr.innerHTML = `<td>${h.jogo}</td><td>${h.valor}</td><td>${h.odd}</td><td>${h.res}</td><td>${h.bank}</td>`;
+    historicoBody.appendChild(tr);
+  });
+}
+
+function criarAposta() {
+  if (estado.pendente) {
+    alert("Finalize a aposta atual primeiro.");
+    return;
+  }
+
+  const valor = parseFloat(betInput.value);
+  const odd = parseFloat(oddInput.value);
+
+  if (isNaN(valor) || isNaN(odd) || valor <= 0 || odd <= 1) {
+    alert("Preencha valor e odd corretamente.");
+    return;
+  }
+
+  estado.pendente = {
+    jogo: "Aposta " + (estado.historico.length + 1),
+    valor,
+    odd
+  };
+
+  salvar();
+}
+
+function resultado(res) {
+  if (!estado.pendente) {
+    alert("Não há aposta pendente.");
+    return;
+  }
+
+  const { valor, odd } = estado.pendente;
+
+  if (res === "GREEN") {
+    estado.bank += valor * (odd - 1);
+  } else {
+    estado.bank -= valor;
+  }
+
+  estado.historico.unshift({
+    jogo: estado.pendente.jogo,
+    valor,
+    odd,
+    res,
+    bank: estado.bank.toFixed(2)
+  });
+
+  estado.pendente = null;
+  salvar();
+}
+
 render();
 </script>
-</body></html>
+</body>
+</html>
