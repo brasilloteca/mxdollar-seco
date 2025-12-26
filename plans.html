@@ -5,6 +5,10 @@
   <title>Planos MX$</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Supabase CDN (IGUAL AO LOGIN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.29.0/dist/supabase.min.js"></script>
+
+  <!-- Stripe -->
   <script src="https://js.stripe.com/v3/"></script>
 
   <style>
@@ -63,6 +67,7 @@
     }
   </style>
 </head>
+
 <body>
 
 <header>
@@ -91,27 +96,34 @@
   </div>
 </section>
 
-<script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+<script>
+  const SUPABASE_URL = "https://ogosbyjhxjatukdhkiqw.supabase.co";
+  const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
 
-  const supabase = createClient(
-    "https://ogosbyjhxjatukdhkiqw.supabase.co",
-    "SUA_ANON_KEY_AQUI"
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    }
   );
 
   const loading = document.getElementById("loading");
   const plans = document.getElementById("plans");
 
   async function init() {
-    // Pega sessão atual
-    const { data: sessionData } = await supabase.auth.getSession();
+    // Aguarda sessão OAuth estar pronta
+    const { data: userData, error } = await supabase.auth.getUser();
 
-    if (!sessionData.session) {
+    if (error || !userData.user) {
       window.location.href = "login.html";
       return;
     }
 
-    // Esconde loading e mostra planos
     loading.style.display = "none";
     plans.style.display = "grid";
 
@@ -123,13 +135,15 @@
         btn.innerText = "Redirecionando...";
 
         try {
+          const session = (await supabase.auth.getSession()).data.session;
+
           const res = await fetch(
             "https://ogosbyjhxjatukdhkiqw.supabase.co/functions/v1/create-checkout-session-",
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${sessionData.session.access_token}`
+                "Authorization": `Bearer ${session.access_token}`
               },
               body: JSON.stringify({
                 priceId: btn.dataset.price
