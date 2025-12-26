@@ -6,8 +6,8 @@
 <style>
 body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; padding:10px; }
 .card { background:#fff; padding:12px; border-radius:10px; max-width:900px; margin:auto; box-shadow:0 0 10px rgba(0,0,0,.1);} 
-input, button { padding:6px; margin:4px 0; width:100%; font-size:14px; }
-@media (max-width:600px){ input,button{font-size:13px;padding:5px;} }
+input, button { padding:4px; margin:2px 0; width:100%; font-size:12px; }
+@media (max-width:600px){ input,button{font-size:11px;padding:3px;} }
 .green { background:#d4edda; }
 .red { background:#f8d7da; }
 </style>
@@ -33,7 +33,9 @@ let state = JSON.parse(localStorage.getItem('bankState')) || { bank:0, initial:0
 function save(){ localStorage.setItem('bankState', JSON.stringify(state)); render(); }
 function render(){ currentBank.innerText=state.bank.toFixed(2); nextBet.innerText=(state.lastWinBet*1.1||0).toFixed(2); history.innerHTML=''; state.history.forEach(r=>{ let tr=document.createElement('tr'); tr.className=r.result==='GREEN'?'green':'red'; tr.innerHTML=`<td>${r.game}</td><td>${r.bet}</td><td>${r.result}</td><td>${r.bank}</td>`; history.appendChild(tr); }); }
 function executeBet(){ let bet=parseFloat(betValue.value); if(!state.initial){ state.initial=parseFloat(initialBank.value); state.bank=state.initial; } state.pending={ game:team1.value+' x '+team2.value, bet, odd:parseFloat(odd.value)}; }
-function markResult(res){ if(!state.pending) return; let {bet,odd,game}=state.pending; if(res==='GREEN'){ state.bank+=bet*(odd-1); state.reds=0; state.lastWinBet=bet; betValue.value=(bet*1.1).toFixed(2);} else { state.bank-=bet; state.reds++; }
+function markResult(res){ if(!state.pending) return alert('Nenhuma aposta pendente.'); let {bet,odd,game}=state.pending; if(res==='GREEN'){ state.bank+=bet*(odd-1); state.reds=0; state.lastWinBet=bet; betValue.value=(bet*1.1).toFixed(2);} else { state.bank-=bet; state.reds++; }
+ state.history.unshift({game,bet,odd,result:res,bank:state.bank.toFixed(2)}); state.pending=null; save(); }
+function render(){ currentBank.innerText=state.bank.toFixed(2); nextBet.innerText=(state.lastWinBet*1.1||0).toFixed(2); history.innerHTML=''; state.history.forEach(r=>{ let tr=document.createElement('tr'); tr.className=r.result==='GREEN'?'green':'red'; tr.innerHTML=`<td>${r.game}</td><td>${r.bet}</td><td>${r.result}</td><td>${r.bank}</td>`; history.appendChild(tr); }); }(res){ if(!state.pending) return; let {bet,odd,game}=state.pending; if(res==='GREEN'){ state.bank+=bet*(odd-1); state.reds=0; state.lastWinBet=bet; betValue.value=(bet*1.1).toFixed(2);} else { state.bank-=bet; state.reds++; }
  state.history.unshift({game,bet,odd,result:res,bank:state.bank.toFixed(2)}); state.pending=null; save(); }
 render();
 </script>
