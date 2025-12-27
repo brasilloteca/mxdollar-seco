@@ -32,11 +32,15 @@ let state = JSON.parse(localStorage.getItem('bankState')) || { bank:0, initial:0
 
 function save(){ localStorage.setItem('bankState', JSON.stringify(state)); render(); }
 
-function calcNext(){ if(!state.lastBet) return parseFloat(betValue.value)||0; if(state.reds===0) return state.lastBet; if(state.reds>=state.maxReds) return state.lastWinBet1.1; return Math.min(state.lastBet(state.reds+1), state.bank); } (){ if(!state.lastBet) return parseFloat(betValue.value)||0; if(state.reds===0) return state.lastBet; return Math.min(state.lastBet*(state.reds+1), state.bank); }
+function calcNext(){ if(!state.lastBet) return parseFloat(betValue.value)||0; if(state.reds===0) return state.lastBet; if(state.reds>=state.maxReds && state.lastWinBet) return state.lastWinBet1.1; return Math.min(state.lastBet(state.reds+1), state.bank); } (){ if(!state.lastBet) return parseFloat(betValue.value)||0; if(state.reds===0) return state.lastBet; return Math.min(state.lastBet*(state.reds+1), state.bank); }
 
 function render(){ currentBank.innerText = state.bank.toFixed(2); nextBet.innerText = calcNext().toFixed(2); history.innerHTML=''; state.history.forEach(r=>{ let tr=document.createElement('tr'); tr.className=r.result==='GREEN'?'green':'red'; tr.innerHTML=<td>${r.game}</td><td>${r.bet.toFixed(2)}</td><td>${r.result}</td><td>${r.bank}</td>; history.appendChild(tr); }); }
 
-function executeBet(){ if(state.pending) return alert('Finalize a aposta atual'); state.maxReds=parseInt(maxRedsInput.value)||3; if(state.reds>=state.maxReds) return alert('Limite máximo de REDs atingido'); let bet=parseFloat(betValue.value); let odd=parseFloat(oddInput.value); if(!state.initial){ state.initial=parseFloat(initialBank.value); state.bank=state.initial; } state.lastBet=bet; state.pending={ game:team1.value+' x '+team2.value, bet, odd}; save(); }
+function executeBet(){ if(state.pending) return alert('Finalize a aposta atual'); state.maxReds=parseInt(maxRedsInput.value)||3; let bet=parseFloat(betValue.value); let odd=parseFloat(oddInput.value); if(!state.initial){ state.initial=parseFloat(initialBank.value); state.bank=state.initial; } state.lastBet=bet; state.pending={ game:team1.value+' x '+team2.value, bet, odd}; save(); }
+
+function markResult(res){ if(!state.pending){ alert('Nenhuma aposta pendente.'); return;} let {bet,odd,game}=state.pending; if(res==='GREEN'){ state.bank += bet*(odd-1); state.reds=0; state.lastWinBet=bet; } else { state.bank -= bet; state.reds++; } state.history.unshift({game,bet,odd,result:res,bank:state.bank.toFixed(2)}); state.pending=null; save(); }
+
+(){ if(state.pending) return alert('Finalize a aposta atual'); state.maxReds=parseInt(maxRedsInput.value)||3; if(state.reds>=state.maxReds) return alert('Limite máximo de REDs atingido'); let bet=parseFloat(betValue.value); let odd=parseFloat(oddInput.value); if(!state.initial){ state.initial=parseFloat(initialBank.value); state.bank=state.initial; } state.lastBet=bet; state.pending={ game:team1.value+' x '+team2.value, bet, odd}; save(); }
 
 function markResult(res){ if(!state.pending){ alert('Nenhuma aposta pendente.'); return;} let {bet,odd,game}=state.pending; if(res==='GREEN'){ state.bank += bet*(odd-1); state.reds=0; } else { state.bank -= bet; state.reds++; } state.history.unshift({game,bet,odd,result:res,bank:state.bank.toFixed(2)}); state.pending=null; save(); }
 
