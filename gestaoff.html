@@ -8,8 +8,10 @@
 body { font-family: Arial, sans-serif; padding:10px; background:#f2f2f2; }
 .container { max-width:420px; margin:auto; background:#fff; padding:10px; border-radius:8px; }
 h2 { text-align:center; margin:5px 0; }
+.row { display:flex; gap:6px; }
+.row input { width:50%; }
 label { font-size:12px; font-weight:bold; }
-input, button {
+input, button, textarea {
   width:100%;
   padding:6px;
   font-size:12px;
@@ -17,10 +19,12 @@ input, button {
   border-radius:5px;
   border:1px solid #ccc;
 }
+textarea { resize:vertical; height:160px; }
 button { background:#222; color:white; border:none; }
 button.green { background:#1a8f3a; }
 button.red { background:#b52b27; }
 button.warn { background:#c77c02; }
+button.prev { background:#0057b8; }
 .small { font-size:11px; }
 table { width:100%; font-size:11px; border-collapse: collapse; margin-top:6px;}
 td, th { border:1px solid #ccc; padding:4px; text-align:center; }
@@ -43,6 +47,15 @@ td, th { border:1px solid #ccc; padding:4px; text-align:center; }
 
 <label>Máx. REDs consecutivos</label>
 <input type="number" id="maxReds" value="3">
+
+<!-- INTEGRAÇÃO AQUI -->
+<div class="row">
+  <input type="text" id="home" placeholder="Time casa">
+  <input type="text" id="away" placeholder="Time fora">
+</div>
+<button class="prev" onclick="gerarPrevisao()">PREVISÃO</button>
+<textarea id="saidaPrompt" placeholder="A previsão aparecerá aqui..."></textarea>
+<!-- FIM DA INTEGRAÇÃO -->
 
 <button onclick="criarAposta()">Criar aposta</button>
 
@@ -106,35 +119,27 @@ function render() {
 
 function calcularProxima() {
   if (!estado.baseBet) return 10;
-
-  if (estado.reds === 0 && estado.lastGreen !== null) {
-    return Math.min(estado.lastGreen * 1.1, estado.bank);
-  }
-
+  if (estado.reds === 0) return estado.baseBet;
   if (estado.reds >= estado.maxReds && estado.lastGreen !== null) {
     return Math.min(estado.lastGreen * 1.1, estado.bank);
   }
-
   return Math.min(estado.baseBet * (estado.reds + 1), estado.bank);
 }
 
 function criarAposta() {
   if (estado.pendente) return alert("Finalize a aposta atual.");
-
   estado.maxReds = parseInt(maxRedsInput.value);
 
   const valor = parseFloat(betInput.value);
   const odd = parseFloat(oddInput.value);
 
   if (!estado.baseBet) estado.baseBet = valor;
-
   estado.pendente = { valor, odd };
   salvar();
 }
 
 function resultado(res) {
   if (!estado.pendente) return alert("Não há aposta.");
-
   const { valor, odd } = estado.pendente;
 
   if (res === "GREEN") {
@@ -159,7 +164,6 @@ function resultado(res) {
 
 function apagarUltima() {
   if (!estado.historico.length) return;
-
   const ultima = estado.historico.shift();
 
   if (ultima.res === "GREEN") {
@@ -167,7 +171,6 @@ function apagarUltima() {
   } else {
     estado.bank += parseFloat(ultima.valor);
   }
-
   salvar();
 }
 
@@ -177,13 +180,26 @@ function resetar() {
   location.reload();
 }
 
-betInput.addEventListener('blur', () => {
-  if (betInput.value !== "") betInput.value = parseFloat(betInput.value).toFixed(2);
-});
+/* FUNÇÃO DA PREVISÃO */
+function gerarPrevisao() {
+  const casa = document.getElementById('home').value.toUpperCase();
+  const fora = document.getElementById('away').value.toUpperCase();
+  if (!casa || !fora) return alert("Informe os dois times.");
 
-oddInput.addEventListener('blur', () => {
-  if (oddInput.value !== "") oddInput.value = parseFloat(oddInput.value).toFixed(2);
-});
+  const prompt = `PROMPT DEFINITIVO — “MENTALIDADE DE ESPECIALISTAS” 
+(PLACAR PLAUSÍVEL — FORMATO NUMÉRICO)
+
+Exemplo: FLAMENGO 2x1 PALMEIRAS
+
+Agora analise o jogo abaixo:
+
+${casa} x ${fora}`;
+
+  document.getElementById('saidaPrompt').value = prompt;
+}
+
+betInput.addEventListener('blur',()=>{ if(betInput.value!=="") betInput.value=parseFloat(betInput.value).toFixed(2); });
+oddInput.addEventListener('blur',()=>{ if(oddInput.value!=="") oddInput.value=parseFloat(oddInput.value).toFixed(2); });
 
 render();
 </script>
