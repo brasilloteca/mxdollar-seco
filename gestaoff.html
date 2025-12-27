@@ -1,173 +1,47 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gestão de Banca</title>
 <style>
-body { font-family: Arial, sans-serif; padding:10px; background:#f2f2f2; }
-.container { max-width:420px; margin:auto; background:#fff; padding:10px; border-radius:8px; }
-h2 { text-align:center; margin:5px 0; }
-label { font-size:12px; font-weight:bold; }
-input, button {
-  width:100%;
-  padding:6px;
-  font-size:12px;
-  margin:4px 0;
-  border-radius:5px;
-  border:1px solid #ccc;
-}
-button { background:#222; color:white; border:none; }
-button.green { background:#1a8f3a; }
-button.red { background:#b52b27; }
-button.warn { background:#c77c02; }
-.small { font-size:11px; }
-table { width:100%; font-size:11px; border-collapse: collapse; margin-top:6px;}
-td, th { border:1px solid #ccc; padding:4px; text-align:center; }
-.greenRow { background:#d9f5df; }
-.redRow { background:#f8d7da; }
+body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; padding:10px; }
+.card { background:#fff; padding:12px; border-radius:10px; max-width:900px; margin:auto; box-shadow:0 0 10px rgba(0,0,0,.1);} 
+input, button { padding:2px 4px; margin:2px 0; width:100%; font-size:11px; box-sizing:border-box; }
+@media (max-width:600px){ input,button{font-size:10px;padding:2px;} } }
+.green { background:#d4edda; }
+.red { background:#f8d7da; }
 </style>
 </head>
 <body>
-<div class="container">
-<h2>Gestão de Banca</h2>
-
-<label>Banca atual</label>
-<input type="number" id="bank">
-
-<label>Valor da próxima aposta</label>
-<input type="number" id="bet">
-
-<label>Odd</label>
-<input type="number" step="0.01" id="odd" value="2.00">
-
-<label>Máx. REDs consecutivos</label>
-<input type="number" id="maxReds" value="3">
-
-<button onclick="criarAposta()">Criar aposta</button>
-
-<div id="pendente" class="small"></div>
-
-<button class="green" onclick="resultado('GREEN')">GREEN</button>
-<button class="red" onclick="resultado('RED')">RED</button>
-
-<button class="warn" onclick="apagarUltima()">↩ Apagar última aposta</button>
-<button class="warn" onclick="resetar()">🗑 Resetar histórico</button>
-
-<h3>Histórico</h3>
-<table>
-<thead>
-<tr><th>#</th><th>Aposta</th><th>Odd</th><th>Res</th><th>Banca</th></tr>
-</thead>
-<tbody id="historico"></tbody>
-</table>
+<div class="card">
+<h1>Gestão de Banca</h1>
+<label>Equipe 1</label><input id="team1">
+<label>Equipe 2</label><input id="team2">
+<label>Valor da Aposta</label><input id="betValue" type="number">
+<label>Odd</label><input id="odd" type="number" step="0.01">
+<label>Banca Inicial</label><input id="initialBank" type="number">
+<label>Máx. REDs</label><input id="maxReds" type="number" value="3">
+<p>Saldo Atual: R$ <span id="currentBank">0</span></p>
+<p>Próxima Aposta: R$ <span id="nextBet">0</span></p>
+<button onclick="executeBet()">Executar</button>
+<button onclick="markResult('GREEN')">GREEN</button>
+<button onclick="markResult('RED')">RED</button>
+<table><tbody id="history"></tbody></table>
 </div>
-
 <script>
-let estado = JSON.parse(localStorage.getItem('gestaoEstado')) || {
-  bank: 100,
-  baseBet: null,
-  pendente: null,
-  historico: [],
-  reds: 0,
-  maxReds: 3
-};
+let state = JSON.parse(localStorage.getItem('bankState')) || { bank:0, initial:0, reds:0, maxReds:3, lastBet:0, pending:null, history:[] };const betValue = document.getElementById('betValue'); const oddInput = document.getElementById('odd'); const maxRedsInput = document.getElementById('maxReds');
 
-const bankInput = document.getElementById('bank');
-const betInput = document.getElementById('bet');
-const oddInput = document.getElementById('odd');
-const maxRedsInput = document.getElementById('maxReds');
-const pendenteDiv = document.getElementById('pendente');
-const historicoBody = document.getElementById('historico');
+function save(){ localStorage.setItem('bankState', JSON.stringify(state)); render(); }
 
-function salvar() {
-  localStorage.setItem('gestaoEstado', JSON.stringify(estado));
-  render();
-}
+function calcNext(){ if(!state.lastBet) return parseFloat(betValue.value)||0; if(state.reds===0) return state.lastBet; if(state.reds>=state.maxReds) return state.lastWinBet1.1; return Math.min(state.lastBet(state.reds+1), state.bank); } (){ if(!state.lastBet) return parseFloat(betValue.value)||0; if(state.reds===0) return state.lastBet; return Math.min(state.lastBet*(state.reds+1), state.bank); }
 
-function render() {
-  bankInput.value = estado.bank.toFixed(2);
-  betInput.value = calcularProxima().toFixed(2);
-  maxRedsInput.value = estado.maxReds;
+function render(){ currentBank.innerText = state.bank.toFixed(2); nextBet.innerText = calcNext().toFixed(2); history.innerHTML=''; state.history.forEach(r=>{ let tr=document.createElement('tr'); tr.className=r.result==='GREEN'?'green':'red'; tr.innerHTML=<td>${r.game}</td><td>${r.bet.toFixed(2)}</td><td>${r.result}</td><td>${r.bank}</td>; history.appendChild(tr); }); }
 
-  pendenteDiv.innerHTML = estado.pendente
-    ? `Aposta pendente: ${estado.pendente.valor.toFixed(2)} @ ${estado.pendente.odd}`
-    : "Nenhuma aposta pendente.";
+function executeBet(){ if(state.pending) return alert('Finalize a aposta atual'); state.maxReds=parseInt(maxRedsInput.value)||3; if(state.reds>=state.maxReds) return alert('Limite máximo de REDs atingido'); let bet=parseFloat(betValue.value); let odd=parseFloat(oddInput.value); if(!state.initial){ state.initial=parseFloat(initialBank.value); state.bank=state.initial; } state.lastBet=bet; state.pending={ game:team1.value+' x '+team2.value, bet, odd}; save(); }
 
-  historicoBody.innerHTML = "";
-  estado.historico.forEach((h, i) => {
-    const tr = document.createElement("tr");
-    tr.className = h.res === 'GREEN' ? 'greenRow' : 'redRow';
-    tr.innerHTML = `<td>${estado.historico.length - i}</td><td>${h.valor}</td><td>${h.odd}</td><td>${h.res}</td><td>${h.bank}</td>`;
-    historicoBody.appendChild(tr);
-  });
-}
+function markResult(res){ if(!state.pending){ alert('Nenhuma aposta pendente.'); return;} let {bet,odd,game}=state.pending; if(res==='GREEN'){ state.bank += bet*(odd-1); state.reds=0; } else { state.bank -= bet; state.reds++; } state.history.unshift({game,bet,odd,result:res,bank:state.bank.toFixed(2)}); state.pending=null; save(); }
 
-function calcularProxima() {
-  if (!estado.baseBet) return 10;
-  if (estado.reds === 0) return estado.baseBet;
-  return Math.min(estado.baseBet * (estado.reds + 1), estado.bank);
-}
+betValue.addEventListener('blur',()=>{ if(betValue.value!=='') betValue.value=parseFloat(betValue.value).toFixed(2); }); oddInput.addEventListener('blur',()=>{ if(oddInput.value!=='') oddInput.value=parseFloat(oddInput.value).toFixed(2); });
 
-function criarAposta() {
-  if (estado.pendente) return alert("Finalize a aposta atual.");
+render(); </script>
 
-  estado.maxReds = parseInt(maxRedsInput.value);
-
-  const valor = parseFloat(betInput.value);
-  const odd = parseFloat(oddInput.value);
-
-  if (!estado.baseBet) estado.baseBet = valor;
-
-  estado.pendente = { valor, odd };
-  salvar();
-}
-
-function resultado(res) {
-  if (!estado.pendente) return alert("Não há aposta.");
-
-  const { valor, odd } = estado.pendente;
-
-  if (res === "GREEN") {
-    estado.bank += valor * (odd - 1);
-    estado.reds = 0;
-  } else {
-    estado.bank -= valor;
-    estado.reds++;
-  }
-
-  estado.historico.unshift({
-    valor: valor.toFixed(2),
-    odd,
-    res,
-    bank: estado.bank.toFixed(2)
-  });
-
-  estado.pendente = null;
-  salvar();
-}
-
-function apagarUltima() {
-  if (!estado.historico.length) return;
-
-  const ultima = estado.historico.shift();
-
-  if (ultima.res === "GREEN") {
-    estado.bank -= parseFloat(ultima.valor) * (ultima.odd - 1);
-  } else {
-    estado.bank += parseFloat(ultima.valor);
-  }
-
-  salvar();
-}
-
-function resetar() {
-  if (!confirm("Resetar tudo?")) return;
-  localStorage.removeItem('gestaoEstado');
-  location.reload();
-}
-
-render();
-</script>
-</body>
-</html>
+</body></html>
