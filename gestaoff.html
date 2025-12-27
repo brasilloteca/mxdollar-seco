@@ -107,7 +107,9 @@ function render() {
 function calcularProxima() {
   if (!estado.baseBet) return 10;
 
-  if (estado.reds === 0) return estado.baseBet;
+  if (estado.reds === 0 && estado.lastGreen !== null) {
+    return Math.min(estado.lastGreen * 1.1, estado.bank);
+  }
 
   if (estado.reds >= estado.maxReds && estado.lastGreen !== null) {
     return Math.min(estado.lastGreen * 1.1, estado.bank);
