@@ -25,6 +25,7 @@ button.green { background:#1a8f3a; }
 button.red { background:#b52b27; }
 button.warn { background:#c77c02; }
 button.prev { background:#0057b8; }
+button.calc { background:#4b0082; }
 .small { font-size:11px; }
 table { width:100%; font-size:11px; border-collapse: collapse; margin-top:6px;}
 td, th { border:1px solid #ccc; padding:4px; text-align:center; }
@@ -56,6 +57,8 @@ td, th { border:1px solid #ccc; padding:4px; text-align:center; }
   <input type="number" id="pctRed" value="100" oninput="atualizarPct()">
 </div>
 
+<button class="calc" onclick="calcularBancaMinima()">💰 Calcular banca mínima</button>
+
 <div class="row">
   <input type="text" id="home" placeholder="Time casa">
   <input type="text" id="away" placeholder="Time fora">
@@ -84,16 +87,9 @@ td, th { border:1px solid #ccc; padding:4px; text-align:center; }
 
 <script>
 let estado = JSON.parse(localStorage.getItem('gestaoEstado')) || {
-  bank: 100,
-  baseBet: null,
-  pendente: null,
-  historico: [],
-  reds: 0,
-  maxReds: 3,
-  lastGreen: null,
-  pctGreen: 30,
-  pctRed: 100,
-  mostrarAjustes: false
+  bank: 100, baseBet: null, pendente: null, historico: [],
+  reds: 0, maxReds: 3, lastGreen: null,
+  pctGreen: 30, pctRed: 100, mostrarAjustes: false
 };
 
 const bankInput = document.getElementById('bank');
@@ -103,12 +99,9 @@ const maxRedsInput = document.getElementById('maxReds');
 const pendenteDiv = document.getElementById('pendente');
 const historicoBody = document.getElementById('historico');
 
-function salvar() {
-  localStorage.setItem('gestaoEstado', JSON.stringify(estado));
-  render();
-}
+function salvar(){ localStorage.setItem('gestaoEstado', JSON.stringify(estado)); render(); }
 
-function render() {
+function render(){
   bankInput.value = estado.bank.toFixed(2);
   betInput.value = calcularProxima().toFixed(2);
   maxRedsInput.value = estado.maxReds;
@@ -121,91 +114,72 @@ function render() {
     : "Nenhuma aposta pendente.";
 
   historicoBody.innerHTML = "";
-  estado.historico.forEach((h, i) => {
-    const tr = document.createElement("tr");
-    tr.className = h.res === 'GREEN' ? 'greenRow' : 'redRow';
-    tr.innerHTML = `<td>${estado.historico.length - i}</td><td>${h.valor}</td><td>${h.odd}</td><td>${h.res}</td><td>${h.bank}</td>`;
+  estado.historico.forEach((h,i)=>{
+    const tr=document.createElement("tr");
+    tr.className=h.res==='GREEN'?'greenRow':'redRow';
+    tr.innerHTML=`<td>${estado.historico.length-i}</td><td>${h.valor}</td><td>${h.odd}</td><td>${h.res}</td><td>${h.bank}</td>`;
     historicoBody.appendChild(tr);
   });
 }
 
-function calcularProxima() {
-  if (!estado.baseBet) return 10;
+function calcularProxima(){
+  if(!estado.baseBet) return 10;
+  if(estado.reds===0) return Math.min((estado.lastGreen||estado.baseBet)*(1+estado.pctGreen/100), estado.bank);
+  if(estado.reds>=estado.maxReds) return Math.min(estado.lastGreen||estado.baseBet, estado.bank);
+  return Math.min(estado.baseBet*Math.pow(1+estado.pctRed/100, estado.reds), estado.bank);
+}
 
-  if (estado.reds === 0) {
-    return Math.min((estado.lastGreen || estado.baseBet) * (1 + estado.pctGreen / 100), estado.bank);
+function criarAposta(){
+  if(estado.pendente) return alert("Finalize a aposta atual.");
+  estado.maxReds=parseInt(maxRedsInput.value);
+  const valor=parseFloat(betInput.value), odd=parseFloat(oddInput.value);
+  if(!estado.baseBet) estado.baseBet=valor;
+  estado.pendente={valor,odd};
+  salvar();
+}
+
+function resultado(res){
+  if(!estado.pendente) return alert("Não há aposta.");
+  const {valor,odd}=estado.pendente;
+  if(res==="GREEN"){ estado.bank+=valor*(odd-1); estado.reds=0; estado.lastGreen=valor; }
+  else{ estado.bank-=valor; estado.reds++; }
+  estado.historico.unshift({valor:valor.toFixed(2),odd,res,bank:estado.bank.toFixed(2)});
+  estado.pendente=null; salvar();
+}
+
+function apagarUltima(){
+  if(!estado.historico.length) return;
+  const u=estado.historico.shift();
+  if(u.res==="GREEN") estado.bank-=parseFloat(u.valor)*(u.odd-1);
+  else estado.bank+=parseFloat(u.valor);
+  salvar();
+}
+
+function resetar(){ if(confirm("Resetar tudo?")){ localStorage.removeItem('gestaoEstado'); location.reload(); } }
+
+function toggleAjustes(){ estado.mostrarAjustes=!estado.mostrarAjustes; salvar(); }
+
+function atualizarPct(){
+  estado.pctGreen=parseFloat(document.getElementById("pctGreen").value)||0;
+  estado.pctRed=parseFloat(document.getElementById("pctRed").value)||0;
+  salvar();
+}
+
+function calcularBancaMinima(){
+  if(!estado.baseBet) return alert("Defina uma aposta inicial.");
+  const base=estado.baseBet, max=estado.maxReds, pct=estado.pctRed/100;
+  let total=0;
+  for(let i=0;i<max;i++){
+    total += base*Math.pow(1+pct,i);
   }
-
-  if (estado.reds >= estado.maxReds) {
-    return Math.min(estado.lastGreen || estado.baseBet, estado.bank);
-  }
-
-  return Math.min(
-    estado.baseBet * Math.pow(1 + estado.pctRed / 100, estado.reds),
-    estado.bank
-  );
+  total += base; // aposta após trava
+  alert(`💰 Banca mínima recomendada:\nR$ ${total.toFixed(2)}\n\nInclui ${max} REDs + 1 aposta após a trava.`);
 }
 
-function criarAposta() {
-  if (estado.pendente) return alert("Finalize a aposta atual.");
-  estado.maxReds = parseInt(maxRedsInput.value);
-  const valor = parseFloat(betInput.value);
-  const odd = parseFloat(oddInput.value);
-  if (!estado.baseBet) estado.baseBet = valor;
-  estado.pendente = { valor, odd };
-  salvar();
-}
-
-function resultado(res) {
-  if (!estado.pendente) return alert("Não há aposta.");
-  const { valor, odd } = estado.pendente;
-
-  if (res === "GREEN") {
-    estado.bank += valor * (odd - 1);
-    estado.reds = 0;
-    estado.lastGreen = valor;
-  } else {
-    estado.bank -= valor;
-    estado.reds++;
-  }
-
-  estado.historico.unshift({ valor: valor.toFixed(2), odd, res, bank: estado.bank.toFixed(2) });
-  estado.pendente = null;
-  salvar();
-}
-
-function apagarUltima() {
-  if (!estado.historico.length) return;
-  const ultima = estado.historico.shift();
-  if (ultima.res === "GREEN") estado.bank -= parseFloat(ultima.valor) * (ultima.odd - 1);
-  else estado.bank += parseFloat(ultima.valor);
-  salvar();
-}
-
-function resetar() {
-  if (!confirm("Resetar tudo?")) return;
-  localStorage.removeItem('gestaoEstado');
-  location.reload();
-}
-
-function toggleAjustes() {
-  estado.mostrarAjustes = !estado.mostrarAjustes;
-  salvar();
-}
-
-function atualizarPct() {
-  estado.pctGreen = parseFloat(document.getElementById("pctGreen").value) || 0;
-  estado.pctRed = parseFloat(document.getElementById("pctRed").value) || 0;
-  salvar();
-}
-
-function gerarPrevisao() {
-  const casa = document.getElementById('home').value.toUpperCase();
-  const fora = document.getElementById('away').value.toUpperCase();
-  if (!casa || !fora) return alert("Informe os dois times.");
-
-  document.getElementById('saidaPrompt').value =
-`PROMPT DEFINITIVO — “MENTALIDADE DE ESPECIALISTAS” 
+function gerarPrevisao(){
+  const casa=home.value.toUpperCase(), fora=away.value.toUpperCase();
+  if(!casa||!fora) return alert("Informe os dois times.");
+  saidaPrompt.value=`PROMPT DEFINITIVO — “MENTALIDADE DE ESPECIALISTAS” 
 (PLACAR PLAUSÍVEL — FORMATO NUMÉRICO)
 
 Exemplo: FLAMENGO 2x1 PALMEIRAS
@@ -215,8 +189,8 @@ Agora analise o jogo abaixo:
 ${casa} x ${fora}`;
 }
 
-betInput.addEventListener('blur',()=>{ if(betInput.value!=="") betInput.value=parseFloat(betInput.value).toFixed(2); });
-oddInput.addEventListener('blur',()=>{ if(oddInput.value!=="") oddInput.value=parseFloat(oddInput.value).toFixed(2); });
+betInput.addEventListener('blur',()=>{ if(betInput.value) betInput.value=parseFloat(betInput.value).toFixed(2); });
+oddInput.addEventListener('blur',()=>{ if(oddInput.value) oddInput.value=parseFloat(oddInput.value).toFixed(2); });
 
 render();
 </script>
