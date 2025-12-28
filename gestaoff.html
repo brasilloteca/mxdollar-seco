@@ -48,14 +48,20 @@ td, th { border:1px solid #ccc; padding:4px; text-align:center; }
 <label>Máx. REDs consecutivos</label>
 <input type="number" id="maxReds" value="3">
 
-<!-- INTEGRAÇÃO AQUI -->
+<button class="warn" onclick="toggleAjustes()">⚙ Ajustes de %</button>
+<div id="ajustes" style="display:none;">
+  <label>% após GREEN</label>
+  <input type="number" id="pctGreen" value="30" oninput="atualizarPct()">
+  <label>% após RED</label>
+  <input type="number" id="pctRed" value="100" oninput="atualizarPct()">
+</div>
+
 <div class="row">
   <input type="text" id="home" placeholder="Time casa">
   <input type="text" id="away" placeholder="Time fora">
 </div>
 <button class="prev" onclick="gerarPrevisao()">PREVISÃO</button>
 <textarea id="saidaPrompt" placeholder="A previsão aparecerá aqui..."></textarea>
-<!-- FIM DA INTEGRAÇÃO -->
 
 <button onclick="criarAposta()">Criar aposta</button>
 
@@ -84,7 +90,10 @@ let estado = JSON.parse(localStorage.getItem('gestaoEstado')) || {
   historico: [],
   reds: 0,
   maxReds: 3,
-  lastGreen: null
+  lastGreen: null,
+  pctGreen: 30,
+  pctRed: 100,
+  mostrarAjustes: false
 };
 
 const bankInput = document.getElementById('bank');
@@ -103,6 +112,9 @@ function render() {
   bankInput.value = estado.bank.toFixed(2);
   betInput.value = calcularProxima().toFixed(2);
   maxRedsInput.value = estado.maxReds;
+  document.getElementById("pctGreen").value = estado.pctGreen;
+  document.getElementById("pctRed").value = estado.pctRed;
+  document.getElementById("ajustes").style.display = estado.mostrarAjustes ? "block" : "none";
 
   pendenteDiv.innerHTML = estado.pendente
     ? `Aposta pendente: ${estado.pendente.valor.toFixed(2)} @ ${estado.pendente.odd}`
@@ -119,20 +131,26 @@ function render() {
 
 function calcularProxima() {
   if (!estado.baseBet) return 10;
-  if (estado.reds === 0) return estado.baseBet;
-  if (estado.reds >= estado.maxReds && estado.lastGreen !== null) {
-    return Math.min(estado.lastGreen * 1.1, estado.bank);
+
+  if (estado.reds === 0) {
+    return Math.min((estado.lastGreen || estado.baseBet) * (1 + estado.pctGreen / 100), estado.bank);
   }
-  return Math.min(estado.baseBet * (estado.reds + 1), estado.bank);
+
+  if (estado.reds >= estado.maxReds) {
+    return Math.min(estado.lastGreen || estado.baseBet, estado.bank);
+  }
+
+  return Math.min(
+    estado.baseBet * Math.pow(1 + estado.pctRed / 100, estado.reds),
+    estado.bank
+  );
 }
 
 function criarAposta() {
   if (estado.pendente) return alert("Finalize a aposta atual.");
   estado.maxReds = parseInt(maxRedsInput.value);
-
   const valor = parseFloat(betInput.value);
   const odd = parseFloat(oddInput.value);
-
   if (!estado.baseBet) estado.baseBet = valor;
   estado.pendente = { valor, odd };
   salvar();
@@ -151,13 +169,7 @@ function resultado(res) {
     estado.reds++;
   }
 
-  estado.historico.unshift({
-    valor: valor.toFixed(2),
-    odd,
-    res,
-    bank: estado.bank.toFixed(2)
-  });
-
+  estado.historico.unshift({ valor: valor.toFixed(2), odd, res, bank: estado.bank.toFixed(2) });
   estado.pendente = null;
   salvar();
 }
@@ -165,12 +177,8 @@ function resultado(res) {
 function apagarUltima() {
   if (!estado.historico.length) return;
   const ultima = estado.historico.shift();
-
-  if (ultima.res === "GREEN") {
-    estado.bank -= parseFloat(ultima.valor) * (ultima.odd - 1);
-  } else {
-    estado.bank += parseFloat(ultima.valor);
-  }
+  if (ultima.res === "GREEN") estado.bank -= parseFloat(ultima.valor) * (ultima.odd - 1);
+  else estado.bank += parseFloat(ultima.valor);
   salvar();
 }
 
@@ -180,13 +188,24 @@ function resetar() {
   location.reload();
 }
 
-/* FUNÇÃO DA PREVISÃO */
+function toggleAjustes() {
+  estado.mostrarAjustes = !estado.mostrarAjustes;
+  salvar();
+}
+
+function atualizarPct() {
+  estado.pctGreen = parseFloat(document.getElementById("pctGreen").value) || 0;
+  estado.pctRed = parseFloat(document.getElementById("pctRed").value) || 0;
+  salvar();
+}
+
 function gerarPrevisao() {
   const casa = document.getElementById('home').value.toUpperCase();
   const fora = document.getElementById('away').value.toUpperCase();
   if (!casa || !fora) return alert("Informe os dois times.");
 
-  const prompt = `PROMPT DEFINITIVO — “MENTALIDADE DE ESPECIALISTAS” 
+  document.getElementById('saidaPrompt').value =
+`PROMPT DEFINITIVO — “MENTALIDADE DE ESPECIALISTAS” 
 (PLACAR PLAUSÍVEL — FORMATO NUMÉRICO)
 
 Exemplo: FLAMENGO 2x1 PALMEIRAS
@@ -194,8 +213,6 @@ Exemplo: FLAMENGO 2x1 PALMEIRAS
 Agora analise o jogo abaixo:
 
 ${casa} x ${fora}`;
-
-  document.getElementById('saidaPrompt').value = prompt;
 }
 
 betInput.addEventListener('blur',()=>{ if(betInput.value!=="") betInput.value=parseFloat(betInput.value).toFixed(2); });
