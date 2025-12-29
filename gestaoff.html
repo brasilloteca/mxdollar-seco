@@ -165,15 +165,34 @@ function atualizarPct(){
   salvar();
 }
 
+/* ✅ FUNÇÃO CORRIGIDA */
 function calcularBancaMinima(){
-  if(!estado.baseBet) return alert("Defina uma aposta inicial.");
-  const base=estado.baseBet, max=estado.maxReds, pct=estado.pctRed/100;
-  let total=0;
-  for(let i=0;i<max;i++){
-    total += base*Math.pow(1+pct,i);
+  const base = parseFloat(document.getElementById("bet").value);
+  const max = parseInt(document.getElementById("maxReds").value);
+  const pct = estado.pctRed / 100;
+
+  if (!base || base <= 0) {
+    alert("Informe o valor da aposta inicial no campo 'Valor da próxima aposta'.");
+    return;
   }
-  total += base; // aposta após trava
-  alert(`💰 Banca mínima recomendada:\nR$ ${total.toFixed(2)}\n\nInclui ${max} REDs + 1 aposta após a trava.`);
+
+  let total = 0;
+  let detalhes = [];
+
+  for (let i = 0; i < max; i++) {
+    const valor = base * Math.pow(1 + pct, i);
+    total += valor;
+    detalhes.push(`RED ${i + 1}: R$ ${valor.toFixed(2)}`);
+  }
+
+  total += base;
+  detalhes.push(`Após a trava: R$ ${base.toFixed(2)}`);
+
+  alert(
+    `💰 BANCA MÍNIMA RECOMENDADA\n\n` +
+    detalhes.join("\n") +
+    `\n\nTotal mínimo: R$ ${total.toFixed(2)}`
+  );
 }
 
 function gerarPrevisao(){
