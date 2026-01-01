@@ -122,11 +122,22 @@ function render(){
   });
 }
 
+/* 🔧 FUNÇÃO CORRIGIDA AQUI */
 function calcularProxima(){
   if(!estado.baseBet) return 10;
-  if(estado.reds===0) return Math.min((estado.lastGreen||estado.baseBet)*(1+estado.pctGreen/100), estado.bank);
-  if(estado.reds>=estado.maxReds) return Math.min(estado.lastGreen||estado.baseBet, estado.bank);
-  return Math.min(estado.baseBet*Math.pow(1+estado.pctRed/100, estado.reds), estado.bank);
+
+  const basePosGreen = (estado.lastGreen || estado.baseBet) * (1 + estado.pctGreen / 100);
+
+  if(estado.reds === 0) 
+    return Math.min(basePosGreen, estado.bank);
+
+  if(estado.reds >= estado.maxReds) 
+    return Math.min(basePosGreen, estado.bank);
+
+  return Math.min(
+    estado.baseBet * Math.pow(1 + estado.pctRed / 100, estado.reds),
+    estado.bank
+  );
 }
 
 function criarAposta(){
@@ -165,7 +176,6 @@ function atualizarPct(){
   salvar();
 }
 
-/* ✅ FUNÇÃO CORRIGIDA */
 function calcularBancaMinima(){
   const base = parseFloat(document.getElementById("bet").value);
   const max = parseInt(document.getElementById("maxReds").value);
@@ -177,22 +187,14 @@ function calcularBancaMinima(){
   }
 
   let total = 0;
-  let detalhes = [];
 
   for (let i = 0; i < max; i++) {
-    const valor = base * Math.pow(1 + pct, i);
-    total += valor;
-    detalhes.push(`RED ${i + 1}: R$ ${valor.toFixed(2)}`);
+    total += base * Math.pow(1 + pct, i);
   }
 
   total += base;
-  detalhes.push(`Após a trava: R$ ${base.toFixed(2)}`);
 
-  alert(
-    `💰 BANCA MÍNIMA RECOMENDADA\n\n` +
-    detalhes.join("\n") +
-    `\n\nTotal mínimo: R$ ${total.toFixed(2)}`
-  );
+  alert(`💰 Banca mínima recomendada:\nR$ ${total.toFixed(2)}`);
 }
 
 function gerarPrevisao(){
