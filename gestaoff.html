@@ -87,7 +87,7 @@ td, th { border:1px solid #ccc; padding:4px; text-align:center; }
 
 <script>
 let estado = JSON.parse(localStorage.getItem('gestaoEstado')) || {
-  bank: 100, baseBet: null, pendente: null, historico: [],
+  bank: 100, baseBet: null, lastBet: null, pendente: null, historico: [],
   reds: 0, maxReds: 3, lastGreen: null,
   pctGreen: 30, pctRed: 100, mostrarAjustes: false
 };
@@ -122,20 +122,18 @@ function render(){
   });
 }
 
-/* 🔧 FUNÇÃO CORRIGIDA AQUI */
 function calcularProxima(){
   if(!estado.baseBet) return 10;
 
   const basePosGreen = (estado.lastGreen || estado.baseBet) * (1 + estado.pctGreen / 100);
 
-  if(estado.reds === 0) 
+  if(estado.reds === 0 || estado.reds >= estado.maxReds) 
     return Math.min(basePosGreen, estado.bank);
 
-  if(estado.reds >= estado.maxReds) 
-    return Math.min(basePosGreen, estado.bank);
+  const base = estado.lastBet || estado.baseBet;
 
   return Math.min(
-    estado.baseBet * Math.pow(1 + estado.pctRed / 100, estado.reds),
+    base * (1 + estado.pctRed / 100),
     estado.bank
   );
 }
@@ -152,8 +150,18 @@ function criarAposta(){
 function resultado(res){
   if(!estado.pendente) return alert("Não há aposta.");
   const {valor,odd}=estado.pendente;
-  if(res==="GREEN"){ estado.bank+=valor*(odd-1); estado.reds=0; estado.lastGreen=valor; }
-  else{ estado.bank-=valor; estado.reds++; }
+
+  if(res==="GREEN"){ 
+    estado.bank+=valor*(odd-1); 
+    estado.reds=0; 
+    estado.lastGreen=valor; 
+  } else { 
+    estado.bank-=valor; 
+    estado.reds++; 
+  }
+
+  estado.lastBet = valor;
+
   estado.historico.unshift({valor:valor.toFixed(2),odd,res,bank:estado.bank.toFixed(2)});
   estado.pendente=null; salvar();
 }
