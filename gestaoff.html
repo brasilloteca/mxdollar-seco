@@ -38,7 +38,11 @@ td, th { border:1px solid #ccc; padding:4px; text-align:center; }
 <h2>Gestão de Banca</h2>
 
 <label>Banca atual</label>
-<input type="number" id="bank">
+<div class="row">
+  <input type="number" id="bank">
+  <input type="number" id="addBank" placeholder="+ valor">
+  <button onclick="adicionarBanca()" style="width:50px;">OK</button>
+</div>
 
 <label>Valor da próxima aposta</label>
 <input type="number" id="bet">
@@ -195,11 +199,7 @@ function calcularBancaMinima(){
   }
 
   let total = 0;
-
-  for (let i = 0; i < max; i++) {
-    total += base * Math.pow(1 + pct, i);
-  }
-
+  for (let i = 0; i < max; i++) total += base * Math.pow(1 + pct, i);
   total += base;
 
   alert(`💰 Banca mínima recomendada:\nR$ ${total.toFixed(2)}`);
@@ -216,6 +216,14 @@ Exemplo: FLAMENGO 2x1 PALMEIRAS
 Agora analise o jogo abaixo:
 
 ${casa} x ${fora}`;
+}
+
+function adicionarBanca(){
+  const v = parseFloat(document.getElementById("addBank").value);
+  if(!v || v <= 0) return alert("Informe um valor válido.");
+  estado.bank += v;
+  document.getElementById("addBank").value = "";
+  salvar();
 }
 
 betInput.addEventListener('blur',()=>{ if(betInput.value) betInput.value=parseFloat(betInput.value).toFixed(2); });
