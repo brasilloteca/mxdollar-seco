@@ -38,6 +38,8 @@ td, th { border:1px solid #ccc; padding:4px; text-align:center; }
 <h2>Gestão de Banca</h2>
 
 <label>Banca atual</label>
+
+<label class="small">Adicionar saldo</label>
 <div class="row">
   <input type="number" id="bank">
   <input type="number" id="addBank" placeholder="+ valor">
@@ -53,7 +55,7 @@ td, th { border:1px solid #ccc; padding:4px; text-align:center; }
 <label>Máx. REDs consecutivos</label>
 <input type="number" id="maxReds" value="3">
 
-<button class="warn" onclick="toggleAjustes()">⚙ Ajustes de %</button>
+<button class="warn" onclick="toggleAjustes()">Ajustes de %</button>
 <div id="ajustes" style="display:none;">
   <label>% após GREEN</label>
   <input type="number" id="pctGreen" value="30" oninput="atualizarPct()">
@@ -61,7 +63,7 @@ td, th { border:1px solid #ccc; padding:4px; text-align:center; }
   <input type="number" id="pctRed" value="100" oninput="atualizarPct()">
 </div>
 
-<button class="calc" onclick="calcularBancaMinima()">💰 Calcular banca mínima</button>
+<button class="calc" onclick="calcularBancaMinima()">Calcular banca mínima</button>
 
 <div class="row">
   <input type="text" id="home" placeholder="Time casa">
@@ -202,7 +204,7 @@ function calcularBancaMinima(){
   for (let i = 0; i < max; i++) total += base * Math.pow(1 + pct, i);
   total += base;
 
-  alert(`💰 Banca mínima recomendada:\nR$ ${total.toFixed(2)}`);
+  alert(`Banca mínima recomendada:\nR$ ${total.toFixed(2)}`);
 }
 
 function gerarPrevisao(){
