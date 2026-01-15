@@ -94,7 +94,7 @@ td, th { border:1px solid #ccc; padding:4px; text-align:center; }
 <script>
 let estado = JSON.parse(localStorage.getItem('gestaoEstado')) || {
   bank: 100, baseBet: null, lastBet: null, pendente: null, historico: [],
-  reds: 0, maxReds: 3, lastGreen: null,
+  reds: 0, maxReds: 3, lastGreen: null, greenBase: null,
   pctGreen: 30, pctRed: 100, mostrarAjustes: false
 };
 
@@ -131,7 +131,8 @@ function render(){
 function calcularProxima(){
   if(!estado.baseBet) return 10;
 
-  const basePosGreen = (estado.lastGreen || estado.baseBet) * (1 + estado.pctGreen / 100);
+  const baseCrescimento = estado.greenBase || estado.baseBet;
+  const basePosGreen = baseCrescimento * (1 + estado.pctGreen / 100);
 
   if(estado.reds === 0 || estado.reds >= estado.maxReds) 
     return Math.min(basePosGreen, estado.bank);
@@ -158,11 +159,12 @@ function resultado(res){
   const {valor,odd}=estado.pendente;
 
   if(res==="GREEN"){ 
-    estado.bank+=valor*(odd-1); 
-    estado.reds=0; 
-    estado.lastGreen=valor; 
+    estado.bank += valor*(odd-1); 
+    estado.reds = 0; 
+    estado.lastGreen = valor;
+    estado.greenBase = valor;
   } else { 
-    estado.bank-=valor; 
+    estado.bank -= valor; 
     estado.reds++; 
   }
 
